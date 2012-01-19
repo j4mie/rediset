@@ -179,22 +179,7 @@ class CachingTestCase(RedisTestCase):
         intersection = self.rediset.intersection(s1, s2, cache_seconds=5)
         self.assertEqual(intersection.cache_seconds, 5)
 
-
-    def test_caching_disabled(self):
-        s1 = self.rediset.set('key1')
-        s2 = self.rediset.set('key2')
-
-        s1.add('a', 'b')
-        s2.add('b', 'c')
-
-        intersection = self.rediset.intersection(s1, s2)
-
-        len(intersection)
-        len(intersection)
-
-        self.assertEqual(intersection.connection.sinterstore.call_count, 2)
-
-    def test_caching_enabled(self):
+    def test_caching(self):
         s1 = self.rediset.set('key1')
         s2 = self.rediset.set('key2')
 

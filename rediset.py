@@ -3,7 +3,7 @@ import redis
 
 class Rediset(object):
 
-    def __init__(self, key_prefix=None, default_cache_seconds=None):
+    def __init__(self, key_prefix=None, default_cache_seconds=60):
         self.connection = RedisConnection(key_prefix)
         self.default_cache_seconds = default_cache_seconds
 
@@ -115,10 +115,9 @@ class Node(object):
         return sorted(child.key for child in self.children)
 
     def create(self):
-        if not (self.cache_seconds and self.connection.exists(self.key)):
+        if not self.connection.exists(self.key):
             self.really_create()
-            if self.cache_seconds:
-                self.connection.expire(self.key, self.cache_seconds)
+            self.connection.expire(self.key, self.cache_seconds)
 
 
 class Set(Node):
