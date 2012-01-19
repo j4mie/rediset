@@ -112,7 +112,11 @@ class CombinationTestCase(RedisTestCase):
         s5.add('b', 'z')
 
         result = self.rediset.union(
-            self.rediset.intersection(s1, s2, s3),
+            self.rediset.intersection(
+                s1,
+                s2,
+                s3
+            ),
             s4,
             s5
         )
