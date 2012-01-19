@@ -53,6 +53,10 @@ class RedisConnection(object):
         keys = [self.create_key(key) for key in keys]
         return self.redis.sunionstore(dest, keys)
 
+    def sismember(self, key, item):
+        key = self.create_key(key)
+        return self.redis.sismember(key, item)
+
     def exists(self, key):
         key = self.create_key(key)
         return self.redis.exists(key)
@@ -82,6 +86,10 @@ class Node(object):
     def members(self):
         self.create()
         return self.connection.smembers(self.key)
+
+    def contains(self, item):
+        self.create()
+        return self.connection.sismember(self.key, item)
 
     def create_children(self):
         [child.create() for child in self.children]
