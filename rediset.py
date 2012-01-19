@@ -53,6 +53,10 @@ class RedisConnection(object):
 
 class Node(object):
 
+    def __init__(self, connection, children):
+        self.connection = connection
+        self.children = children
+
     def cardinality(self):
         return self.connection.scard(self.key)
 
@@ -77,8 +81,8 @@ class Node(object):
 class Set(Node):
 
     def __init__(self, connection, key):
-        self.connection = connection
         self.key = key
+        super(Set, self).__init__(connection, None)
 
     def add(self, *values):
         self.connection.sadd(self.key, *values)
@@ -88,10 +92,6 @@ class Set(Node):
 
 
 class Intersection(Node):
-
-    def __init__(self, connection, children):
-        self.connection = connection
-        self.children = children
 
     @property
     def key(self):
@@ -103,10 +103,6 @@ class Intersection(Node):
 
 
 class Union(Node):
-
-    def __init__(self, connection, children):
-        self.connection = connection
-        self.children = children
 
     @property
     def key(self):
