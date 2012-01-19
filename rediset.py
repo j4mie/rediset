@@ -7,8 +7,8 @@ class Rediset(object):
     Main class responsible for creating instances of sets and operators
     """
 
-    def __init__(self, key_prefix=None, default_cache_seconds=60):
-        self.redis = RedisWrapper(key_prefix)
+    def __init__(self, key_prefix=None, default_cache_seconds=60, redis_client=None):
+        self.redis = RedisWrapper(key_prefix, client=redis_client)
         self.default_cache_seconds = default_cache_seconds
 
     def set(self, key):
@@ -40,8 +40,8 @@ class RedisWrapper(object):
     prefixes all keys with key_prefix if set.
     """
 
-    def __init__(self, key_prefix=None):
-        self.redis = redis.Redis()
+    def __init__(self, key_prefix=None, client=None):
+        self.redis = client or redis.Redis()
         self.key_prefix = key_prefix
 
     def create_key(self, original_key):
