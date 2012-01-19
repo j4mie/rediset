@@ -80,19 +80,8 @@ class RedisConnection(object):
 
 class Node(object):
 
-    def __init__(self, connection, children, cache_seconds=None):
-        self.connection = connection
-
-        children = children or []
-        processed_children = []
-        for child in children:
-            if isinstance(child, basestring):
-                processed_children.append(Set(connection, child))
-            else:
-                processed_children.append(child)
-
-        self.children = processed_children
-        self.cache_seconds = cache_seconds
+    def __repr__(self):
+        return "<%s.%s %s>" % (__name__, self.__class__.__name__, self.key)
 
     def cardinality(self):
         self.create()
@@ -100,9 +89,6 @@ class Node(object):
 
     def __len__(self):
         return self.cardinality()
-
-    def __repr__(self):
-        return "<%s.%s %s>" % (__name__, self.__class__.__name__, self.key)
 
     def members(self):
         self.create()
@@ -118,8 +104,42 @@ class Node(object):
     def __contains__(self, item):
         return self.contains(item)
 
+    def create(self):
+        pass
+
+
+class Set(Node):
+
+    def __init__(self, connection, key):
+        self.connection = connection
+        self.key = key
+
+    def add(self, *values):
+        self.connection.sadd(self.key, *values)
+
+    def remove(self, *values):
+        self.connection.srem(self.key, *values)
+
+
+class OperationNode(Node):
+
+    def __init__(self, connection, children, cache_seconds=None):
+        self.connection = connection
+
+        children = children or []
+        processed_children = []
+        for child in children:
+            if isinstance(child, basestring):
+                processed_children.append(Set(connection, child))
+            else:
+                processed_children.append(child)
+
+        self.children = processed_children
+        self.cache_seconds = cache_seconds
+
     def create_children(self):
-        [child.create() for child in self.children]
+        for child in self.children:
+            child.create()
 
     def child_keys(self):
         return sorted(child.key for child in self.children)
@@ -131,23 +151,7 @@ class Node(object):
             self.connection.expire(self.key, self.cache_seconds)
 
 
-class Set(Node):
-
-    def __init__(self, connection, key):
-        self.key = key
-        super(Set, self).__init__(connection, None)
-
-    def add(self, *values):
-        self.connection.sadd(self.key, *values)
-
-    def remove(self, *values):
-        self.connection.srem(self.key, *values)
-
-    def create(self):
-        pass
-
-
-class Intersection(Node):
+class Intersection(OperationNode):
 
     @property
     def key(self):
@@ -157,7 +161,7 @@ class Intersection(Node):
         return self.connection.sinterstore(self.key, self.child_keys())
 
 
-class Union(Node):
+class Union(OperationNode):
 
     @property
     def key(self):
