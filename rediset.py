@@ -4,11 +4,11 @@ import redis
 class Rediset(object):
 
     def __init__(self, key_prefix=None, default_cache_seconds=60):
-        self.connection = RedisConnection(key_prefix)
+        self.redis = RedisWrapper(key_prefix)
         self.default_cache_seconds = default_cache_seconds
 
     def set(self, key):
-        return Set(self.connection, key)
+        return Set(self.redis, key)
 
     def _operation(self, cls, *items, **kwargs):
         if len(items) == 1:
@@ -18,7 +18,7 @@ class Rediset(object):
             else:
                 return item
         cache_seconds = kwargs.get('cache_seconds') or self.default_cache_seconds
-        return cls(self.connection, items, cache_seconds=cache_seconds)
+        return cls(self.redis, items, cache_seconds=cache_seconds)
 
     def intersection(self, *items, **kwargs):
         return self._operation(Intersection, *items, **kwargs)
@@ -27,7 +27,7 @@ class Rediset(object):
         return self._operation(Union, *items, **kwargs)
 
 
-class RedisConnection(object):
+class RedisWrapper(object):
 
     def __init__(self, key_prefix=None):
         self.redis = redis.Redis()
@@ -85,21 +85,21 @@ class Node(object):
 
     def cardinality(self):
         self.create()
-        return self.connection.scard(self.key)
+        return self.redis.scard(self.key)
 
     def __len__(self):
         return self.cardinality()
 
     def members(self):
         self.create()
-        return self.connection.smembers(self.key)
+        return self.redis.smembers(self.key)
 
     def __iter__(self):
         return iter(self.members())
 
     def contains(self, item):
         self.create()
-        return self.connection.sismember(self.key, item)
+        return self.redis.sismember(self.key, item)
 
     def __contains__(self, item):
         return self.contains(item)
@@ -110,27 +110,27 @@ class Node(object):
 
 class Set(Node):
 
-    def __init__(self, connection, key):
-        self.connection = connection
+    def __init__(self, redis, key):
+        self.redis = redis
         self.key = key
 
     def add(self, *values):
-        self.connection.sadd(self.key, *values)
+        self.redis.sadd(self.key, *values)
 
     def remove(self, *values):
-        self.connection.srem(self.key, *values)
+        self.redis.srem(self.key, *values)
 
 
 class OperationNode(Node):
 
-    def __init__(self, connection, children, cache_seconds=None):
-        self.connection = connection
+    def __init__(self, redis, children, cache_seconds=None):
+        self.redis = redis
 
         children = children or []
         processed_children = []
         for child in children:
             if isinstance(child, basestring):
-                processed_children.append(Set(connection, child))
+                processed_children.append(Set(redis, child))
             else:
                 processed_children.append(child)
 
@@ -145,10 +145,10 @@ class OperationNode(Node):
         return sorted(child.key for child in self.children)
 
     def create(self):
-        if not self.connection.exists(self.key):
+        if not self.redis.exists(self.key):
             self.create_children()
             self.really_create()
-            self.connection.expire(self.key, self.cache_seconds)
+            self.redis.expire(self.key, self.cache_seconds)
 
 
 class Intersection(OperationNode):
@@ -158,7 +158,7 @@ class Intersection(OperationNode):
         return "intersection(%s)" % ",".join(self.child_keys())
 
     def really_create(self):
-        return self.connection.sinterstore(self.key, self.child_keys())
+        return self.redis.sinterstore(self.key, self.child_keys())
 
 
 class Union(OperationNode):
@@ -168,4 +168,4 @@ class Union(OperationNode):
         return "union(%s)" % ",".join(self.child_keys())
 
     def really_create(self):
-        return self.connection.sunionstore(self.key, self.child_keys())
+        return self.redis.sunionstore(self.key, self.child_keys())

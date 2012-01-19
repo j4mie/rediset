@@ -1,13 +1,13 @@
 from unittest import TestCase
 from mock import Mock
 from time import sleep
-from rediset import Rediset, RedisConnection, Set, Intersection, Union
+from rediset import Rediset, RedisWrapper, Set, Intersection, Union
 
 
 class KeyGenerationTestCase(TestCase):
 
     def test_key_generation(self):
-        rc = RedisConnection(key_prefix='some-prefix')
+        rc = RedisWrapper(key_prefix='some-prefix')
         key = rc.create_key('foo')
         self.assertEqual(key, 'some-prefix:foo')
 
@@ -18,10 +18,10 @@ class RedisTestCase(TestCase):
 
     def setUp(self):
         self.rediset = Rediset(key_prefix=self.PREFIX)
-        self.rediset.connection = Mock(wraps=self.rediset.connection)
+        self.rediset.redis = Mock(wraps=self.rediset.redis)
 
     def tearDown(self):
-        redis = self.rediset.connection.redis
+        redis = self.rediset.redis.redis
         keys = redis.keys('%s*' % self.PREFIX)
         if keys:
             redis.delete(*keys)
@@ -179,9 +179,9 @@ class ConversionTestCase(RedisTestCase):
         s1 = self.rediset.set('key1')
         s1.add('a', 'b', 'c')
         self.assertTrue('a' in s1)
-        self.rediset.connection.sismember.assert_called_with('key1', 'a')
+        self.rediset.redis.sismember.assert_called_with('key1', 'a')
         self.assertFalse('x' in s1)
-        self.rediset.connection.sismember.assert_called_with('key1', 'x')
+        self.rediset.redis.sismember.assert_called_with('key1', 'x')
 
 
 class CachingTestCase(RedisTestCase):
@@ -209,10 +209,10 @@ class CachingTestCase(RedisTestCase):
         len(intersection)
         len(intersection)
 
-        self.assertEqual(intersection.connection.sinterstore.call_count, 1)
+        self.assertEqual(intersection.redis.sinterstore.call_count, 1)
 
         sleep(2)
 
         len(intersection)
 
-        self.assertEqual(intersection.connection.sinterstore.call_count, 2)
+        self.assertEqual(intersection.redis.sinterstore.call_count, 2)
