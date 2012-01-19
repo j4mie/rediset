@@ -1,7 +1,7 @@
 from unittest import TestCase
 from mock import Mock
 from time import sleep
-from rediset import Rediset, RedisWrapper, Set, Intersection, Union
+from rediset import Rediset, RedisWrapper, Set, Intersection
 
 
 class KeyGenerationTestCase(TestCase):
@@ -57,7 +57,7 @@ class IntersectionTestCase(RedisTestCase):
         s2.add('b', 'c')
 
         i = self.rediset.intersection(s1, s2)
-        self.assertEqual(len(i),1)
+        self.assertEqual(len(i), 1)
         self.assertEqual(i.members(), set(['b']))
 
     def test_intersection_tree(self):
