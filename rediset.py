@@ -3,17 +3,20 @@ import redis
 
 class Rediset(object):
 
-    def __init__(self, key_prefix=None):
+    def __init__(self, key_prefix=None, default_cache_seconds=None):
         self.connection = RedisConnection(key_prefix)
+        self.default_cache_seconds = default_cache_seconds
 
     def set(self, key):
         return Set(self.connection, key)
 
-    def intersection(self, *items):
-        return Intersection(self.connection, items)
+    def intersection(self, *items, **kwargs):
+        cache_seconds = kwargs.get('cache_seconds') or self.default_cache_seconds
+        return Intersection(self.connection, items, cache_seconds=cache_seconds)
 
-    def union(self, *items):
-        return Union(self.connection, items)
+    def union(self, *items, **kwargs):
+        cache_seconds = kwargs.get('cache_seconds') or self.default_cache_seconds
+        return Union(self.connection, items, cache_seconds=cache_seconds)
 
 
 class RedisConnection(object):
@@ -53,9 +56,10 @@ class RedisConnection(object):
 
 class Node(object):
 
-    def __init__(self, connection, children):
+    def __init__(self, connection, children, cache_seconds=None):
         self.connection = connection
         self.children = children
+        self.cache_seconds = cache_seconds
 
     def cardinality(self):
         return self.connection.scard(self.key)
