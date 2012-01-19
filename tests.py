@@ -162,6 +162,14 @@ class CombinationTestCase(RedisTestCase):
         self.assertEqual(result.members(), set(['b', 'e', 'f', 'z']))
 
 
+class ConversionTestCase(RedisTestCase):
+
+    def test_iterable(self):
+        s1 = self.rediset.set('key1')
+        s1.add('a', 'b', 'c')
+        self.assertEqual(set(s1), set(['a', 'b', 'c']))
+
+
 class CachingTestCase(RedisTestCase):
 
     def setUp(self):

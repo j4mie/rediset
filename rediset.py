@@ -104,6 +104,9 @@ class Node(object):
         self.create()
         return self.connection.smembers(self.key)
 
+    def __iter__(self):
+        return iter(self.members())
+
     def contains(self, item):
         self.create()
         return self.connection.sismember(self.key, item)
