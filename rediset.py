@@ -70,7 +70,16 @@ class Node(object):
 
     def __init__(self, connection, children, cache_seconds=None):
         self.connection = connection
-        self.children = children
+
+        children = children or []
+        processed_children = []
+        for child in children:
+            if isinstance(child, basestring):
+                processed_children.append(Set(connection, child))
+            else:
+                processed_children.append(child)
+
+        self.children = processed_children
         self.cache_seconds = cache_seconds
 
     def cardinality(self):
