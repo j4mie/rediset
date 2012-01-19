@@ -18,6 +18,7 @@ class RedisTestCase(TestCase):
 
     def setUp(self):
         self.rediset = Rediset(key_prefix=self.PREFIX)
+        self.rediset.connection = Mock(wraps=self.rediset.connection)
 
     def tearDown(self):
         redis = self.rediset.connection.redis
@@ -169,12 +170,16 @@ class ConversionTestCase(RedisTestCase):
         s1.add('a', 'b', 'c')
         self.assertEqual(set(s1), set(['a', 'b', 'c']))
 
+    def test_contains(self):
+        s1 = self.rediset.set('key1')
+        s1.add('a', 'b', 'c')
+        self.assertTrue('a' in s1)
+        self.rediset.connection.sismember.assert_called_with('key1', 'a')
+        self.assertFalse('x' in s1)
+        self.rediset.connection.sismember.assert_called_with('key1', 'x')
+
 
 class CachingTestCase(RedisTestCase):
-
-    def setUp(self):
-        super(CachingTestCase, self).setUp()
-        self.rediset.connection = Mock(wraps=self.rediset.connection)
 
     def test_default_caching_and_override(self):
         self.rediset = Rediset(key_prefix=self.PREFIX, default_cache_seconds=10)

@@ -111,6 +111,9 @@ class Node(object):
         self.create()
         return self.connection.sismember(self.key, item)
 
+    def __contains__(self, item):
+        return self.contains(item)
+
     def create_children(self):
         [child.create() for child in self.children]
 
