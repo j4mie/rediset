@@ -6,7 +6,7 @@ from distutils.core import setup
 setup(
     name='rediset',
     version='0.0.1',
-    description='Redis set abstraction',
+    description='Redis lazy set abstraction',
     author='Jamie Matthews',
     author_email='jamie.matthews@gmail.com',
     url='http://github.com/j4mie/rediset',
