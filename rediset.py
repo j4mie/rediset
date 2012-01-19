@@ -53,6 +53,14 @@ class RedisConnection(object):
         keys = [self.create_key(key) for key in keys]
         return self.redis.sunionstore(dest, keys)
 
+    def exists(self, key):
+        key = self.create_key(key)
+        return self.redis.exists(key)
+
+    def expire(self, key, time):
+        key = self.create_key(key)
+        return self.redis.expire(key, time)
+
 
 class Node(object):
 
@@ -81,6 +89,12 @@ class Node(object):
     def child_keys(self):
         return sorted(child.key for child in self.children)
 
+    def create(self):
+        if not (self.cache_seconds and self.connection.exists(self.key)):
+            self.really_create()
+            if self.cache_seconds:
+                self.connection.expire(self.key, self.cache_seconds)
+
 
 class Set(Node):
 
@@ -101,7 +115,7 @@ class Intersection(Node):
     def key(self):
         return "intersection(%s)" % ",".join(self.child_keys())
 
-    def create(self):
+    def really_create(self):
         self.create_children()
         return self.connection.sinterstore(self.key, self.child_keys())
 
@@ -112,6 +126,6 @@ class Union(Node):
     def key(self):
         return "union(%s)" % ",".join(self.child_keys())
 
-    def create(self):
+    def really_create(self):
         self.create_children()
         return self.connection.sunionstore(self.key, self.child_keys())

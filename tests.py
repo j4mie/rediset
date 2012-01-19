@@ -1,4 +1,6 @@
 from unittest import TestCase
+from mock import Mock
+from time import sleep
 from rediset import Rediset, RedisConnection
 
 
@@ -20,7 +22,8 @@ class RedisTestCase(TestCase):
     def tearDown(self):
         redis = self.rediset.connection.redis
         keys = redis.keys('%s*' % self.PREFIX)
-        redis.delete(*keys)
+        if keys:
+            redis.delete(*keys)
 
 
 class SetTestCase(RedisTestCase):
@@ -123,3 +126,56 @@ class CombinationTestCase(RedisTestCase):
 
         self.assertEqual(len(result), 4)
         self.assertEqual(result.members(), set(['b', 'e', 'f', 'z']))
+
+
+class CachingTestCase(RedisTestCase):
+
+    def setUp(self):
+        super(CachingTestCase, self).setUp()
+        self.rediset.connection = Mock(wraps=self.rediset.connection)
+
+    def test_default_caching_and_override(self):
+        self.rediset = Rediset(key_prefix=self.PREFIX, default_cache_seconds=10)
+        s1 = self.rediset.set('key1')
+        s2 = self.rediset.set('key2')
+
+        intersection = self.rediset.intersection(s1, s2)
+        self.assertEqual(intersection.cache_seconds, 10)
+
+        intersection = self.rediset.intersection(s1, s2, cache_seconds=5)
+        self.assertEqual(intersection.cache_seconds, 5)
+
+
+    def test_caching_disabled(self):
+        s1 = self.rediset.set('key1')
+        s2 = self.rediset.set('key2')
+
+        s1.add('a', 'b')
+        s2.add('b', 'c')
+
+        intersection = self.rediset.intersection(s1, s2)
+
+        len(intersection)
+        len(intersection)
+
+        self.assertEqual(intersection.connection.sinterstore.call_count, 2)
+
+    def test_caching_enabled(self):
+        s1 = self.rediset.set('key1')
+        s2 = self.rediset.set('key2')
+
+        s1.add('a', 'b')
+        s2.add('b', 'c')
+
+        intersection = self.rediset.intersection(s1, s2, cache_seconds=1)
+
+        len(intersection)
+        len(intersection)
+
+        self.assertEqual(intersection.connection.sinterstore.call_count, 1)
+
+        sleep(2)
+
+        len(intersection)
+
+        self.assertEqual(intersection.connection.sinterstore.call_count, 2)
