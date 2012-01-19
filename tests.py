@@ -41,6 +41,11 @@ class SetTestCase(RedisTestCase):
         self.assertTrue(s.contains('a'))
         self.assertFalse(s.contains('d'))
 
+        s.remove('a')
+        self.assertFalse(s.contains('a'))
+        s.remove('b', 'c')
+        self.assertEqual(len(s), 0)
+
 
 class IntersectionTestCase(RedisTestCase):
 

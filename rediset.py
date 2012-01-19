@@ -47,6 +47,10 @@ class RedisConnection(object):
         key = self.create_key(key)
         return self.redis.sadd(key, *values)
 
+    def srem(self, key, *values):
+        key = self.create_key(key)
+        return self.redis.srem(key, *values)
+
     def smembers(self, key):
         key = self.create_key(key)
         return self.redis.smembers(key)
@@ -122,6 +126,7 @@ class Node(object):
 
     def create(self):
         if not self.connection.exists(self.key):
+            self.create_children()
             self.really_create()
             self.connection.expire(self.key, self.cache_seconds)
 
@@ -135,6 +140,9 @@ class Set(Node):
     def add(self, *values):
         self.connection.sadd(self.key, *values)
 
+    def remove(self, *values):
+        self.connection.srem(self.key, *values)
+
     def create(self):
         pass
 
@@ -146,7 +154,6 @@ class Intersection(Node):
         return "intersection(%s)" % ",".join(self.child_keys())
 
     def really_create(self):
-        self.create_children()
         return self.connection.sinterstore(self.key, self.child_keys())
 
 
@@ -157,5 +164,4 @@ class Union(Node):
         return "union(%s)" % ",".join(self.child_keys())
 
     def really_create(self):
-        self.create_children()
         return self.connection.sunionstore(self.key, self.child_keys())
