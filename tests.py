@@ -1,7 +1,7 @@
 from unittest import TestCase
 from mock import Mock
 from time import sleep
-from rediset import Rediset, RedisConnection, Set
+from rediset import Rediset, RedisConnection, Set, Intersection, Union
 
 
 class KeyGenerationTestCase(TestCase):
@@ -116,6 +116,21 @@ class ShortcutTestCase(RedisTestCase):
             self.assertTrue(isinstance(child, Set))
 
         self.assertEqual(len(intersection), 1)
+
+    def test_single_item(self):
+        s1 = self.rediset.set('key1')
+        s1.add('a', 'b')
+        intersection = self.rediset.intersection(s1)
+        self.assertTrue(isinstance(intersection, Set))
+
+        intersection = self.rediset.intersection('key1')
+        self.assertTrue(isinstance(intersection, Set))
+
+        s2 = self.rediset.set('key2')
+        s2.add('b', 'c')
+        intersection = self.rediset.intersection(s1, s2)
+        union = self.rediset.union(intersection)
+        self.assertTrue(isinstance(union, Intersection))
 
 
 class CombinationTestCase(RedisTestCase):

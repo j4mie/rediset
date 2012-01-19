@@ -10,13 +10,21 @@ class Rediset(object):
     def set(self, key):
         return Set(self.connection, key)
 
-    def intersection(self, *items, **kwargs):
+    def _operation(self, cls, *items, **kwargs):
+        if len(items) == 1:
+            item = items[0]
+            if isinstance(item, basestring):
+                return self.set(item)
+            else:
+                return item
         cache_seconds = kwargs.get('cache_seconds') or self.default_cache_seconds
-        return Intersection(self.connection, items, cache_seconds=cache_seconds)
+        return cls(self.connection, items, cache_seconds=cache_seconds)
+
+    def intersection(self, *items, **kwargs):
+        return self._operation(Intersection, *items, **kwargs)
 
     def union(self, *items, **kwargs):
-        cache_seconds = kwargs.get('cache_seconds') or self.default_cache_seconds
-        return Union(self.connection, items, cache_seconds=cache_seconds)
+        return self._operation(Union, *items, **kwargs)
 
 
 class RedisConnection(object):
