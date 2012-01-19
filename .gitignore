@@ -1,0 +1,7 @@
+*.pyc
+*.swp
+.DS_Store
+build
+dist
+MANIFEST
+docs/_*
