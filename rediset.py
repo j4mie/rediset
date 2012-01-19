@@ -3,6 +3,10 @@ import redis
 
 class Rediset(object):
 
+    """
+    Main class responsible for creating instances of sets and operators
+    """
+
     def __init__(self, key_prefix=None, default_cache_seconds=60):
         self.redis = RedisWrapper(key_prefix)
         self.default_cache_seconds = default_cache_seconds
@@ -28,6 +32,13 @@ class Rediset(object):
 
 
 class RedisWrapper(object):
+
+    """
+    Simple wrapper around a Redis client instance
+
+    Supports only the set operations we need, and automatically
+    prefixes all keys with key_prefix if set.
+    """
 
     def __init__(self, key_prefix=None):
         self.redis = redis.Redis()
@@ -80,6 +91,15 @@ class RedisWrapper(object):
 
 class Node(object):
 
+    """
+    Represents a node in a a tree of set operations.
+
+    This class provides read-only operations on sets stored in
+    Redis, such as cardinality and containment. It does not provide
+    operations that mutate the set, because these are only supported
+    by leaf nodes and not intermediate operation nodes.
+    """
+
     def __repr__(self):
         return "<%s.%s %s>" % (__name__, self.__class__.__name__, self.key)
 
@@ -110,6 +130,18 @@ class Node(object):
 
 class Set(Node):
 
+    """
+    Represents a Redis set
+
+    Note that this class does *not* try too hard to look like a Python
+    set. For example, you cannot pass an iterable into its constructor
+    to provide the members of the set. This is because a set in Redis
+    may or may not already contain elements. A non-existent set in Redis
+    is equivalent to an existing set with zero items. So this class should
+    be thought of as an interface to an *existing* Redis set, providing
+    an API to add or remove elements.
+    """
+
     def __init__(self, redis, key):
         self.redis = redis
         self.key = key
@@ -122,6 +154,15 @@ class Set(Node):
 
 
 class OperationNode(Node):
+
+    """
+    Represents a set in Redis that is the computed result of an operation
+
+    Subclasses of this class provide operations over one or more other
+    sets in Redis. The sets they operate on may be leaf nodes in the tree
+    (ie instances of Set that have been created and updated directly) or
+    may represent the result of another operation.
+    """
 
     def __init__(self, redis, children, cache_seconds=None):
         self.redis = redis
@@ -153,6 +194,10 @@ class OperationNode(Node):
 
 class Intersection(OperationNode):
 
+    """
+    Represents the result of an intersection of one or more other sets
+    """
+
     @property
     def key(self):
         return "intersection(%s)" % ",".join(self.child_keys())
@@ -162,6 +207,10 @@ class Intersection(OperationNode):
 
 
 class Union(OperationNode):
+
+    """
+    Represents the result of a union of one or more other sets
+    """
 
     @property
     def key(self):
