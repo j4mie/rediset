@@ -70,10 +70,10 @@ class Node(object):
         self.cache_seconds = cache_seconds
 
     def cardinality(self):
+        self.create()
         return self.connection.scard(self.key)
 
     def __len__(self):
-        self.create()
         return self.cardinality()
 
     def __repr__(self):
