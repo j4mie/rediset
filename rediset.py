@@ -11,24 +11,24 @@ class Rediset(object):
         self.redis = RedisWrapper(key_prefix, client=redis_client)
         self.default_cache_seconds = default_cache_seconds
 
-    def set(self, key):
-        return Set(self.redis, key)
+    def Set(self, key):
+        return SetNode(self.redis, key)
 
     def _operation(self, cls, *items, **kwargs):
         if len(items) == 1:
             item = items[0]
             if isinstance(item, basestring):
-                return self.set(item)
+                return self.Set(item)
             else:
                 return item
         cache_seconds = kwargs.get('cache_seconds') or self.default_cache_seconds
         return cls(self.redis, items, cache_seconds=cache_seconds)
 
-    def intersection(self, *items, **kwargs):
-        return self._operation(Intersection, *items, **kwargs)
+    def Intersection(self, *items, **kwargs):
+        return self._operation(IntersectionNode, *items, **kwargs)
 
-    def union(self, *items, **kwargs):
-        return self._operation(Union, *items, **kwargs)
+    def Union(self, *items, **kwargs):
+        return self._operation(UnionNode, *items, **kwargs)
 
 
 class RedisWrapper(object):
@@ -128,7 +128,7 @@ class Node(object):
         pass
 
 
-class Set(Node):
+class SetNode(Node):
 
     """
     Represents a Redis set
@@ -171,7 +171,7 @@ class OperationNode(Node):
         processed_children = []
         for child in children:
             if isinstance(child, basestring):
-                processed_children.append(Set(redis, child))
+                processed_children.append(SetNode(redis, child))
             else:
                 processed_children.append(child)
 
@@ -192,7 +192,7 @@ class OperationNode(Node):
             self.redis.expire(self.key, self.cache_seconds)
 
 
-class Intersection(OperationNode):
+class IntersectionNode(OperationNode):
 
     """
     Represents the result of an intersection of one or more other sets
@@ -206,7 +206,7 @@ class Intersection(OperationNode):
         return self.redis.sinterstore(self.key, self.child_keys())
 
 
-class Union(OperationNode):
+class UnionNode(OperationNode):
 
     """
     Represents the result of a union of one or more other sets
