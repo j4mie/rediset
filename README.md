@@ -175,7 +175,7 @@ versions are equivalent:
 >>> result = rs.Union('key1', 'key2')
 ```
 
-## How does it works?
+## How does it work?
 
 Set operations are performed using the `SUNIONSTORE`, `SINTERSTORE` and
 `SDIFFSTORE` commands provided by Redis. The result of an operation on
