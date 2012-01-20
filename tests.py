@@ -107,6 +107,39 @@ class UnionTestCase(RedisTestCase):
         self.assertEqual(i2.members(), set(['a', 'b', 'c', 'd', 'z', 'x']))
 
 
+class DifferenceTestCase(RedisTestCase):
+
+    def test_basic_difference(self):
+        s1 = self.rediset.Set('key1')
+        s2 = self.rediset.Set('key2')
+        s3 = self.rediset.Set('key3')
+
+        s1.add('a', 'b', 'c', 'x')
+        s2.add('b')
+        s3.add('c', 'd')
+
+        d = self.rediset.Difference(s1, s2, s3)
+        self.assertEqual(len(d), 2)
+        self.assertEqual(d.members(), set(['a', 'x']))
+
+    def test_difference_tree(self):
+        s1 = self.rediset.Set('key1')
+        s2 = self.rediset.Set('key2')
+        s3 = self.rediset.Set('key3')
+
+        s1.add('a', 'b', 'c')
+        s2.add('b', 'd', 'e')
+        s3.add('c', 'z', 'x')
+
+        d1 = self.rediset.Difference(s1, s2)
+        self.assertEqual(len(d1), 2)
+        self.assertEqual(d1.members(), set(['a', 'c']))
+
+        d2 = self.rediset.Difference(d1, s3)
+        self.assertEqual(len(d2), 1)
+        self.assertEqual(d2.members(), set(['a']))
+
+
 class ShortcutTestCase(RedisTestCase):
 
     def test_string_shortcuts(self):

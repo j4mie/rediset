@@ -30,6 +30,9 @@ class Rediset(object):
     def Union(self, *items, **kwargs):
         return self._operation(UnionNode, *items, **kwargs)
 
+    def Difference(self, *items, **kwargs):
+        return self._operation(DifferenceNode, *items, **kwargs)
+
 
 class RedisWrapper(object):
 
@@ -75,6 +78,11 @@ class RedisWrapper(object):
         dest = self.create_key(dest)
         keys = [self.create_key(key) for key in keys]
         return self.redis.sunionstore(dest, keys)
+
+    def sdiffstore(self, dest, keys):
+        dest = self.create_key(dest)
+        keys = [self.create_key(key) for key in keys]
+        return self.redis.sdiffstore(dest, keys)
 
     def sismember(self, key, item):
         key = self.create_key(key)
@@ -183,7 +191,7 @@ class OperationNode(Node):
             child.create()
 
     def child_keys(self):
-        return sorted(child.key for child in self.children)
+        return [child.key for child in self.children]
 
     def create(self):
         if not self.redis.exists(self.key):
@@ -200,7 +208,7 @@ class IntersectionNode(OperationNode):
 
     @property
     def key(self):
-        return "intersection(%s)" % ",".join(self.child_keys())
+        return "intersection(%s)" % ",".join(sorted(self.child_keys()))
 
     def really_create(self):
         return self.redis.sinterstore(self.key, self.child_keys())
@@ -214,7 +222,24 @@ class UnionNode(OperationNode):
 
     @property
     def key(self):
-        return "union(%s)" % ",".join(self.child_keys())
+        return "union(%s)" % ",".join(sorted(self.child_keys()))
 
     def really_create(self):
         return self.redis.sunionstore(self.key, self.child_keys())
+
+
+class DifferenceNode(OperationNode):
+
+    """
+    Represents the result of the difference between the first set
+    and all the successive sets
+    """
+
+    @property
+    def key(self):
+        child_keys = self.child_keys()
+        child_keys = child_keys[0:1] + sorted(child_keys[1:])
+        return "difference(%s)" % ",".join(child_keys)
+
+    def really_create(self):
+        return self.redis.sdiffstore(self.key, self.child_keys())
