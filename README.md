@@ -285,7 +285,9 @@ fresh.
 * Inverted indexes
 * ...any other suggestions?
 
-## Why doesn't the API look more like Python's built-in set type?
+## FAQ
+
+### Why doesn't the API look more like Python's built-in set type?
 
 Python's `set` API is based around performing operations *between* sets:
 
@@ -299,6 +301,20 @@ the operations themselves as first-class citizens, as well as the sets.
 
 If you disagree, probably wouldn't be too hard to move the API closer to that
 of built-in sets. Feel free to open a pull request!
+
+### Urgh, why do those methods start with capital letters?
+
+Just pretend you're instantiating a class instead of calling a method. If you
+really hate the way it looks, start your program like this:
+
+```python
+from rediset import Rediset
+
+rs = Rediset()
+Set, Union, Intersection, Difference = rs.Set, rs.Union, rs.Intersection, rs.Difference
+
+result = Union(Set('key1'), Intersection('key2', 'key3'))
+```
 
 ## Development
 
