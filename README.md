@@ -2,6 +2,8 @@
 
 **Composable, cachable, lazy trees of Redis set operations**
 
+**Author:** Jamie Matthews. [Follow me on Twitter](http://twitter.com/j4mie).
+
 ## Changelog
 
 #### 0.0.1
