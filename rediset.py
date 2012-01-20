@@ -196,7 +196,7 @@ class OperationNode(Node):
     def create(self):
         if not self.redis.exists(self.key):
             self.create_children()
-            self.really_create()
+            self.perform_operation()
             self.redis.expire(self.key, self.cache_seconds)
 
 
@@ -210,7 +210,7 @@ class IntersectionNode(OperationNode):
     def key(self):
         return "intersection(%s)" % ",".join(sorted(self.child_keys()))
 
-    def really_create(self):
+    def perform_operation(self):
         return self.redis.sinterstore(self.key, self.child_keys())
 
 
@@ -224,7 +224,7 @@ class UnionNode(OperationNode):
     def key(self):
         return "union(%s)" % ",".join(sorted(self.child_keys()))
 
-    def really_create(self):
+    def perform_operation(self):
         return self.redis.sunionstore(self.key, self.child_keys())
 
 
@@ -241,5 +241,5 @@ class DifferenceNode(OperationNode):
         child_keys = child_keys[0:1] + sorted(child_keys[1:])
         return "difference(%s)" % ",".join(child_keys)
 
-    def really_create(self):
+    def perform_operation(self):
         return self.redis.sdiffstore(self.key, self.child_keys())
