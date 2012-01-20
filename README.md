@@ -6,7 +6,7 @@
 
 ## Changelog
 
-#### 0.0.1
+#### 0.1.0
 
 * Initial release. Very experimental.
 
