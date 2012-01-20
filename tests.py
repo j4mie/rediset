@@ -76,6 +76,12 @@ class IntersectionTestCase(RedisTestCase):
         self.assertEqual(len(i2), 1)
         self.assertEqual(i2.members(), set(['b']))
 
+    def test_key_generation(self):
+        i1 = self.rediset.Intersection('a', 'b', 'c')
+        i2 = self.rediset.Intersection('c', 'b', 'a')
+        i3 = self.rediset.Intersection('b' ,'c', 'a')
+        self.assertTrue(i1.key == i2.key == i3.key)
+
 
 class UnionTestCase(RedisTestCase):
 
@@ -105,6 +111,12 @@ class UnionTestCase(RedisTestCase):
         i2 = self.rediset.Union(i1, s3)
         self.assertEqual(len(i2), 6)
         self.assertEqual(i2.members(), set(['a', 'b', 'c', 'd', 'z', 'x']))
+
+    def test_key_generation(self):
+        i1 = self.rediset.Union('a', 'b', 'c')
+        i2 = self.rediset.Union('c', 'b', 'a')
+        i3 = self.rediset.Union('b' ,'c', 'a')
+        self.assertTrue(i1.key == i2.key == i3.key)
 
 
 class DifferenceTestCase(RedisTestCase):
@@ -138,6 +150,13 @@ class DifferenceTestCase(RedisTestCase):
         d2 = self.rediset.Difference(d1, s3)
         self.assertEqual(len(d2), 1)
         self.assertEqual(d2.members(), set(['a']))
+
+    def test_key_generation(self):
+        d1 = self.rediset.Difference('a', 'b', 'c')
+        d2 = self.rediset.Difference('a', 'c', 'b')
+        d3 = self.rediset.Difference('b' ,'c', 'a')
+        self.assertEqual(d1.key, d2.key)
+        self.assertNotEqual(d1.key, d3.key)
 
 
 class ShortcutTestCase(RedisTestCase):
