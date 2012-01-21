@@ -213,7 +213,7 @@ argument to any of the operation functions.
 
 ```python
 >>> rs = Rediset(default_cache_seconds=600)
->>> u3 =rs.Union('key1', 'key2', cache_seconds=6000)
+>>> u3 = rs.Union('key1', 'key2', cache_seconds=6000)
 >>> u3.cache_seconds
 6000
 ```
