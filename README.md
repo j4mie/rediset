@@ -220,9 +220,9 @@ argument to any of the operation functions.
 
 ### Laziness
 
-When the above example tree is created and assigned to a variable, *nothing
-happens*. The operations are only performed in Redis when you actually attempt
-to inspect the contents of the variable - by calling `len(result)` or `'foo' in
+When you create a tree of operations with Rediset, *nothing happens*. The
+operations are only performed in Redis when you actually attempt to inspect
+the contents of the result set - by calling `len(result)` or `'foo' in
 result` for example.
 
 Rediset starts to shine when you need to manipulate trees of sets and
