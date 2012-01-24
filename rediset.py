@@ -21,7 +21,7 @@ class Rediset(object):
                 return self.Set(item)
             else:
                 return item
-        cache_seconds = kwargs.get('cache_seconds') or self.default_cache_seconds
+        cache_seconds = kwargs.get('cache_seconds', self.default_cache_seconds)
         return cls(self.redis, items, cache_seconds=cache_seconds)
 
     def Intersection(self, *items, **kwargs):
