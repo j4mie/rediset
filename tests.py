@@ -277,3 +277,17 @@ class CachingTestCase(RedisTestCase):
         len(intersection)
 
         self.assertEqual(intersection.rediset.redis.sinterstore.call_count, 2)
+
+    def test_caching_empty_sets(self):
+        s1 = self.rediset.Set('key1')
+        s2 = self.rediset.Set('key2')
+
+        s1.add('a', 'b')
+        s2.add('c', 'd')
+
+        intersection = self.rediset.Intersection(s1, s2, cache_seconds=1)
+
+        len(intersection)
+        len(intersection)
+
+        self.assertEqual(intersection.rediset.redis.sinterstore.call_count, 1)

@@ -53,6 +53,10 @@ class RedisWrapper(object):
             key = "%s:%s" % (self.key_prefix, key)
         return key
 
+    def set(self, key, value):
+        key = self.create_key(key)
+        return self.redis.set(key, value)
+
     def scard(self, key):
         key = self.create_key(key)
         return self.redis.scard(key)
@@ -198,6 +202,15 @@ class OperationNode(Node):
         self.children = processed_children
         self.cache_seconds = cache_seconds
 
+    @property
+    def cache_key(self):
+        return 'cached:%s' % self.key
+
+    def setup_cache(self):
+        self.rediset.redis.set(self.cache_key, 1)
+        self.rediset.redis.expire(self.cache_key, self.cache_seconds)
+        self.rediset.redis.expire(self.key, self.cache_seconds)
+
     def create_children(self):
         for child in self.children:
             child.create()
@@ -206,10 +219,10 @@ class OperationNode(Node):
         return [child.key for child in self.children]
 
     def create(self):
-        if not self.rediset.redis.exists(self.key):
+        if not self.rediset.redis.exists(self.cache_key):
             self.create_children()
             self.perform_operation()
-            self.rediset.redis.expire(self.key, self.cache_seconds)
+            self.setup_cache()
 
 
 class IntersectionNode(OperationNode):

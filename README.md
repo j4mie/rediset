@@ -205,8 +205,8 @@ by Rediset.
 These generated keys are *volatile* - they are set to `EXPIRE` after some
 number of seconds. The result sets can be thought of as *caches*. Every time
 you attempt to perform an operation, Rediset will first check whether the key
-representing the result already exists. If it does, it won't bother actually
-asking Redis to perform the operation.
+representing the cached result already exists. If it does, it won't bother
+actually asking Redis to perform the operation.
 
 Rediset provides very fine-grained control over caching. The top-level
 `Rediset` class accepts a `default_cache_seconds` constructor argument, whose
