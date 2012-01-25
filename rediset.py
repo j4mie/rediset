@@ -12,7 +12,7 @@ class Rediset(object):
         self.default_cache_seconds = default_cache_seconds
 
     def Set(self, key):
-        return SetNode(self.redis, key)
+        return SetNode(self, key)
 
     def _operation(self, cls, *items, **kwargs):
         if len(items) == 1:
@@ -22,7 +22,7 @@ class Rediset(object):
             else:
                 return item
         cache_seconds = kwargs.get('cache_seconds', self.default_cache_seconds)
-        return cls(self.redis, items, cache_seconds=cache_seconds)
+        return cls(self, items, cache_seconds=cache_seconds)
 
     def Intersection(self, *items, **kwargs):
         return self._operation(IntersectionNode, *items, **kwargs)
@@ -113,37 +113,36 @@ class Node(object):
 
     def cardinality(self):
         self.create()
-        return self.redis.scard(self.key)
+        return self.rediset.redis.scard(self.key)
 
     def __len__(self):
         return self.cardinality()
 
     def members(self):
         self.create()
-        return self.redis.smembers(self.key)
+        return self.rediset.redis.smembers(self.key)
 
     def __iter__(self):
         return iter(self.members())
 
     def contains(self, item):
         self.create()
-        return self.redis.sismember(self.key, item)
+        return self.rediset.redis.sismember(self.key, item)
 
     def __contains__(self, item):
         return self.contains(item)
 
-    def _operation(self, cls, *others, **kwargs):
-        cache_seconds = kwargs.get('cache_seconds')
-        return cls(self.redis, (self,) + others, cache_seconds)
-
     def intersection(self, *others, **kwargs):
-        return self._operation(IntersectionNode, *others, **kwargs)
+        sets = (self,) + others
+        return self.rediset.Intersection(*sets, **kwargs)
 
     def union(self, *others, **kwargs):
-        return self._operation(UnionNode, *others, **kwargs)
+        sets = (self,) + others
+        return self.rediset.Union(*sets, **kwargs)
 
     def difference(self, *others, **kwargs):
-        return self._operation(DifferenceNode, *others, **kwargs)
+        sets = (self,) + others
+        return self.rediset.Difference(*sets, **kwargs)
 
     def create(self):
         pass
@@ -163,15 +162,15 @@ class SetNode(Node):
     an API to add or remove elements.
     """
 
-    def __init__(self, redis, key):
-        self.redis = redis
+    def __init__(self, rediset, key):
+        self.rediset = rediset
         self.key = key
 
     def add(self, *values):
-        self.redis.sadd(self.key, *values)
+        self.rediset.redis.sadd(self.key, *values)
 
     def remove(self, *values):
-        self.redis.srem(self.key, *values)
+        self.rediset.redis.srem(self.key, *values)
 
 
 class OperationNode(Node):
@@ -185,14 +184,14 @@ class OperationNode(Node):
     may represent the result of another operation.
     """
 
-    def __init__(self, redis, children, cache_seconds=None):
-        self.redis = redis
+    def __init__(self, rediset, children, cache_seconds=None):
+        self.rediset = rediset
 
         children = children or []
         processed_children = []
         for child in children:
             if isinstance(child, basestring):
-                processed_children.append(SetNode(redis, child))
+                processed_children.append(SetNode(rediset, child))
             else:
                 processed_children.append(child)
 
@@ -207,10 +206,10 @@ class OperationNode(Node):
         return [child.key for child in self.children]
 
     def create(self):
-        if not self.redis.exists(self.key):
+        if not self.rediset.redis.exists(self.key):
             self.create_children()
             self.perform_operation()
-            self.redis.expire(self.key, self.cache_seconds)
+            self.rediset.redis.expire(self.key, self.cache_seconds)
 
 
 class IntersectionNode(OperationNode):
@@ -224,7 +223,7 @@ class IntersectionNode(OperationNode):
         return "intersection(%s)" % ",".join(sorted(self.child_keys()))
 
     def perform_operation(self):
-        return self.redis.sinterstore(self.key, self.child_keys())
+        return self.rediset.redis.sinterstore(self.key, self.child_keys())
 
 
 class UnionNode(OperationNode):
@@ -238,7 +237,7 @@ class UnionNode(OperationNode):
         return "union(%s)" % ",".join(sorted(self.child_keys()))
 
     def perform_operation(self):
-        return self.redis.sunionstore(self.key, self.child_keys())
+        return self.rediset.redis.sunionstore(self.key, self.child_keys())
 
 
 class DifferenceNode(OperationNode):
@@ -255,4 +254,4 @@ class DifferenceNode(OperationNode):
         return "difference(%s)" % ",".join(child_keys)
 
     def perform_operation(self):
-        return self.redis.sdiffstore(self.key, self.child_keys())
+        return self.rediset.redis.sdiffstore(self.key, self.child_keys())

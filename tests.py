@@ -270,10 +270,10 @@ class CachingTestCase(RedisTestCase):
         len(intersection)
         len(intersection)
 
-        self.assertEqual(intersection.redis.sinterstore.call_count, 1)
+        self.assertEqual(intersection.rediset.redis.sinterstore.call_count, 1)
 
         sleep(2)
 
         len(intersection)
 
-        self.assertEqual(intersection.redis.sinterstore.call_count, 2)
+        self.assertEqual(intersection.rediset.redis.sinterstore.call_count, 2)
