@@ -132,6 +132,19 @@ class Node(object):
     def __contains__(self, item):
         return self.contains(item)
 
+    def _operation(self, cls, *others, **kwargs):
+        cache_seconds = kwargs.get('cache_seconds')
+        return cls(self.redis, (self,) + others, cache_seconds)
+
+    def intersection(self, *others, **kwargs):
+        return self._operation(IntersectionNode, *others, **kwargs)
+
+    def union(self, *others, **kwargs):
+        return self._operation(UnionNode, *others, **kwargs)
+
+    def difference(self, *others, **kwargs):
+        return self._operation(DifferenceNode, *others, **kwargs)
+
     def create(self):
         pass
 

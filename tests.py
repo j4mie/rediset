@@ -60,6 +60,9 @@ class IntersectionTestCase(RedisTestCase):
         self.assertEqual(len(i), 1)
         self.assertEqual(i.members(), set(['b']))
 
+        i2 = s1.intersection(s2)
+        self.assertEqual(i.members(), i2.members())
+
     def test_intersection_tree(self):
         s1 = self.rediset.Set('key1')
         s2 = self.rediset.Set('key2')
@@ -95,6 +98,9 @@ class UnionTestCase(RedisTestCase):
         u = self.rediset.Union(s1, s2)
         self.assertEqual(len(u), 3)
         self.assertEqual(u.members(), set(['a', 'b', 'c']))
+
+        u2 = s1.union(s2)
+        self.assertEqual(u.members(), u2.members())
 
     def test_union_tree(self):
         s1 = self.rediset.Set('key1')
@@ -133,6 +139,9 @@ class DifferenceTestCase(RedisTestCase):
         d = self.rediset.Difference(s1, s2, s3)
         self.assertEqual(len(d), 2)
         self.assertEqual(d.members(), set(['a', 'x']))
+
+        d2 = s1.difference(s2, s3)
+        self.assertEqual(d.members(), d2.members())
 
     def test_difference_tree(self):
         s1 = self.rediset.Set('key1')

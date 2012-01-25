@@ -6,6 +6,10 @@
 
 ## Changelog
 
+#### 0.2.0
+
+* Add support for operation between sets, eg `s1.intersection(s2)`
+
 #### 0.1.0
 
 * Initial release. Very experimental.
@@ -177,6 +181,18 @@ versions are equivalent:
 >>> result = rs.Union('key1', 'key2')
 ```
 
+Rediset also supports an optional "Python-set-like" interface for operations between sets
+(and other operations):
+
+```python
+>>> s1 = rs.Set('key1')
+>>> s2 = rs.Set('key2')
+>>> s3 = rs.Set('key3')
+>>> i = s1.intersection(s2, s3)
+>>> u = s1.union(s2, s3)
+>>> d = s1.difference(s2, s3)
+```
+
 ## How does it work?
 
 Set operations are performed using the `SUNIONSTORE`, `SINTERSTORE` and
@@ -289,7 +305,7 @@ fresh.
 
 ## FAQ
 
-### Why doesn't the API look more like Python's built-in set type?
+### Why doesn't the default API look more like Python's built-in `set` type?
 
 Python's `set` API is based around performing operations *between* sets:
 
@@ -301,8 +317,13 @@ This doesn't quite feel right when working with Redis, which works in terms
 of *operations* performed on *multiple sets*. It felt more natural to treat
 the operations themselves as first-class citizens, as well as the sets.
 
-If you disagree, probably wouldn't be too hard to move the API closer to that
-of built-in sets. Feel free to open a pull request!
+You can, optionally, use the more Python-like version of the API:
+
+```python
+>>> s1 = rs.Set('key1')
+>>> s2 = rs.Set('key2')
+>>> i = s1.intersection(s2)
+```
 
 ### Urgh, why do those methods start with capital letters?
 
