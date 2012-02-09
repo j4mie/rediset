@@ -143,7 +143,6 @@ class SortedSetOperationTestCase(RedisTestCase):
             d = self.rediset.Difference(s1, s2)
 
 
-
 class IntersectionTestCase(RedisTestCase):
 
     def test_basic_intersection(self):
