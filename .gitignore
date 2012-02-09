@@ -4,5 +4,6 @@
 build
 dist
 MANIFEST
-docs/_*
+docs/build/
+gh-pages/
 *egg-info/*
