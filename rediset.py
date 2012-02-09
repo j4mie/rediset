@@ -27,14 +27,26 @@ class Rediset(object):
         cache_seconds = kwargs.get('cache_seconds', self.default_cache_seconds)
         return cls(self, items, cache_seconds=cache_seconds)
 
+    def _is_sorted(self, item):
+        return isinstance(item, SortedNode)
+
     def Intersection(self, *items, **kwargs):
-        return self._operation(IntersectionNode, *items, **kwargs)
+        if self._is_sorted(items[0]):
+            return self._operation(SortedIntersectionNode, *items, **kwargs)
+        else:
+            return self._operation(IntersectionNode, *items, **kwargs)
 
     def Union(self, *items, **kwargs):
-        return self._operation(UnionNode, *items, **kwargs)
+        if self._is_sorted(items[0]):
+            return self._operation(SortedUnionNode, *items, **kwargs)
+        else:
+            return self._operation(UnionNode, *items, **kwargs)
 
     def Difference(self, *items, **kwargs):
-        return self._operation(DifferenceNode, *items, **kwargs)
+        if self._is_sorted(items[0]):
+            return self._operation(SortedDifferenceNode, *items, **kwargs)
+        else:
+            return self._operation(DifferenceNode, *items, **kwargs)
 
 
 class RedisWrapper(object):
@@ -338,3 +350,44 @@ class DifferenceNode(OperationNode):
 
     def perform_operation(self):
         return self.rediset.redis.sdiffstore(self.key, self.child_keys())
+
+
+class SortedOperationNode(OperationNode, SortedNode):
+
+    """
+    Represents a set in Redis that is the computed result of an operation
+    on sorted sets
+    """
+
+    pass
+
+
+class SortedIntersectionNode(SortedOperationNode):
+
+    """
+    Represents the result of an intersection of one or more sorted sets
+    """
+
+    pass
+
+
+class SortedUnionNode(SortedOperationNode):
+
+    """
+    Represents the result of a union of one or more sorted sets
+    """
+
+    pass
+
+
+class SortedDifferenceNode(SortedOperationNode):
+
+    """
+    Represents the result of the difference between the first sorted
+    set and all the successive sorted sets
+
+    THIS OPERATION IS NOT SUPPORTED BY REDIS
+    """
+
+    def __new__(cls, *args, **kwargs):
+        raise TypeError("Difference operation not supported for sorted sets")

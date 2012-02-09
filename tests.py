@@ -1,7 +1,14 @@
 from unittest import TestCase
 from mock import Mock
 from time import sleep
-from rediset import Rediset, RedisWrapper, SetNode, IntersectionNode
+from rediset import (
+    Rediset,
+    RedisWrapper,
+    SetNode,
+    IntersectionNode,
+    SortedIntersectionNode,
+    SortedUnionNode,
+)
 
 
 class KeyGenerationTestCase(TestCase):
@@ -64,6 +71,31 @@ class SortedSetTestCase(RedisTestCase):
         self.assertFalse(s.contains('a'))
         s.remove('b', 'c')
         self.assertEqual(len(s), 0)
+
+
+class SortedSetOperationTestCase(RedisTestCase):
+
+    def test_sorted_set_intersection(self):
+        s1 = self.rediset.SortedSet('key1')
+        s2 = self.rediset.SortedSet('key2')
+
+        i = self.rediset.Intersection(s1, s2)
+        self.assertTrue(isinstance(i, SortedIntersectionNode))
+
+    def test_sorted_set_union(self):
+        s1 = self.rediset.SortedSet('key1')
+        s2 = self.rediset.SortedSet('key2')
+
+        u = self.rediset.Union(s1, s2)
+        self.assertTrue(isinstance(u, SortedUnionNode))
+
+    def test_sorted_set_difference(self):
+        s1 = self.rediset.SortedSet('key1')
+        s2 = self.rediset.SortedSet('key2')
+
+        with self.assertRaises(TypeError):
+            d = self.rediset.Difference(s1, s2)
+
 
 
 class IntersectionTestCase(RedisTestCase):
