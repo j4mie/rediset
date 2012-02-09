@@ -14,6 +14,9 @@ class Rediset(object):
     def Set(self, key):
         return SetNode(self, key)
 
+    def SortedSet(self, key):
+        return SortedSetNode(self, key)
+
     def _operation(self, cls, *items, **kwargs):
         if len(items) == 1:
             item = items[0]
@@ -91,6 +94,14 @@ class RedisWrapper(object):
     def sismember(self, key, item):
         key = self.create_key(key)
         return self.redis.sismember(key, item)
+
+    def zadd(self, key, *args, **kwargs):
+        key = self.create_key(key)
+        return self.redis.zadd(key, *args, **kwargs)
+
+    def zcard(self, key):
+        key = self.create_key(key)
+        return self.redis.zcard(key)
 
     def exists(self, key):
         key = self.create_key(key)
@@ -175,6 +186,32 @@ class SetNode(Node):
 
     def remove(self, *values):
         self.rediset.redis.srem(self.key, *values)
+
+
+class SortedNode(Node):
+
+    """
+    Represents a node in a tree of sorted sets and sorted set operations
+    """
+
+    def cardinality(self):
+        self.create()
+        return self.rediset.redis.zcard(self.key)
+
+
+class SortedSetNode(SortedNode):
+
+    """
+    Represents a Redis sorted set
+    """
+
+    def __init__(self, rediset, key):
+        self.rediset = rediset
+        self.key = key
+
+    def add(self, *values):
+        values = dict([(name, score) for score, name in values])
+        self.rediset.redis.zadd(self.key, **values)
 
 
 class OperationNode(Node):

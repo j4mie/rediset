@@ -47,6 +47,17 @@ class SetTestCase(RedisTestCase):
         self.assertEqual(len(s), 0)
 
 
+class SortedSetTestCase(RedisTestCase):
+
+    def test_basic_sorted_set(self):
+        s = self.rediset.SortedSet('key')
+
+        s.add((1, 'foo'))
+        s.add((2, 'bar'), (3, 'baz'))
+
+        self.assertEqual(len(s), 3)
+
+
 class IntersectionTestCase(RedisTestCase):
 
     def test_basic_intersection(self):
