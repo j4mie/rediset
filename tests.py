@@ -196,6 +196,16 @@ class IntersectionTestCase(RedisTestCase):
         i2 = s1.intersection(s2)
         self.assertEqual(i.members(), i2.members())
 
+        i3 = self.rediset.Intersection(s1, s2, aggregate='SUM')
+        self.assertEqual(i3.members(withscores=True), [('b', 3)])
+
+        i4 = self.rediset.Intersection(s1, s2, aggregate='MAX')
+        self.assertEqual(i4.members(withscores=True), [('b', 2)])
+
+        i5 = self.rediset.Intersection(s1, s2, aggregate='MIN')
+        self.assertEqual(i5.members(withscores=True), [('b', 1)])
+
+
 class UnionTestCase(RedisTestCase):
 
     def test_basic_union(self):
@@ -239,7 +249,7 @@ class UnionTestCase(RedisTestCase):
         s2 = self.rediset.SortedSet('key2')
 
         s1.add(('a', 1), ('b', 2))
-        s2.add(('b', 2), ('c', 4))
+        s2.add(('b', 3), ('c', 6))
 
         u = self.rediset.Union(s1, s2)
         self.assertEqual(len(u), 3)
@@ -247,6 +257,15 @@ class UnionTestCase(RedisTestCase):
 
         u2 = s1.union(s2)
         self.assertEqual(u.members(), u2.members())
+
+        u3 = self.rediset.Union(s1, s2, aggregate='SUM')
+        self.assertEqual(u3.members(withscores=True), [('a', 1), ('b', 5), ('c', 6)])
+
+        u4 = self.rediset.Union(s1, s2, aggregate='MAX')
+        self.assertEqual(u4.members(withscores=True), [('a', 1), ('b', 3), ('c', 6)])
+
+        u5 = self.rediset.Union(s1, s2, aggregate='MIN')
+        self.assertEqual(u5.members(withscores=True), [('a', 1), ('b', 2), ('c', 6)])
 
 
 class DifferenceTestCase(RedisTestCase):

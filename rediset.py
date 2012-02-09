@@ -24,8 +24,8 @@ class Rediset(object):
                 return self.Set(item)
             else:
                 return item
-        cache_seconds = kwargs.get('cache_seconds', self.default_cache_seconds)
-        return cls(self, items, cache_seconds=cache_seconds)
+        kwargs.setdefault('cache_seconds', self.default_cache_seconds)
+        return cls(self, items, **kwargs)
 
     def _is_sorted(self, item):
         return isinstance(item, SortedNode)
@@ -127,15 +127,15 @@ class RedisWrapper(object):
         key = self.create_key(key)
         return self.redis.zscore(key, item)
 
-    def zinterstore(self, dest, keys):
+    def zinterstore(self, dest, keys, aggregate=None):
         dest = self.create_key(dest)
         keys = [self.create_key(key) for key in keys]
-        return self.redis.zinterstore(dest, keys)
+        return self.redis.zinterstore(dest, keys, aggregate=aggregate)
 
-    def zunionstore(self, dest, keys):
+    def zunionstore(self, dest, keys, aggregate=None):
         dest = self.create_key(dest)
         keys = [self.create_key(key) for key in keys]
-        return self.redis.zunionstore(dest, keys)
+        return self.redis.zunionstore(dest, keys, aggregate=aggregate)
 
     def exists(self, key):
         key = self.create_key(key)
@@ -388,7 +388,16 @@ class SortedOperationNode(OperationNode, SortedNode):
     on sorted sets
     """
 
-    pass
+    def __init__(self, *args, **kwargs):
+        self.aggregate = kwargs.pop('aggregate', 'SUM')
+        super(SortedOperationNode, self).__init__(*args, **kwargs)
+
+    def extra_key_components(self):
+        """
+        Return a key component based on the variable options passed
+        to this operation, such as aggregate
+        """
+        return "aggregate=%s" % self.aggregate
 
 
 class SortedIntersectionNode(SortedOperationNode):
@@ -399,11 +408,14 @@ class SortedIntersectionNode(SortedOperationNode):
 
     @property
     def key(self):
-        # TODO include extra args in the key
-        return "sortedintersection(%s)" % ",".join(sorted(self.child_keys()))
+        return "sortedintersection(%s)(%s)" % (
+            ",".join(sorted(self.child_keys())),
+            self.extra_key_components(),
+        )
 
     def perform_operation(self):
-        return self.rediset.redis.zinterstore(self.key, self.child_keys())
+        return self.rediset.redis.zinterstore(self.key, self.child_keys(),
+                                              aggregate=self.aggregate)
 
 
 class SortedUnionNode(SortedOperationNode):
@@ -414,11 +426,14 @@ class SortedUnionNode(SortedOperationNode):
 
     @property
     def key(self):
-        # TODO include extra args in the key
-        return "sortedunion(%s)" % ",".join(sorted(self.child_keys()))
+        return "sortedunion(%s)(%s)" % (
+            ",".join(sorted(self.child_keys())),
+            self.extra_key_components(),
+        )
 
     def perform_operation(self):
-        return self.rediset.redis.zunionstore(self.key, self.child_keys())
+        return self.rediset.redis.zunionstore(self.key, self.child_keys(),
+                                              aggregate=self.aggregate)
 
 
 class SortedDifferenceNode(SortedOperationNode):
