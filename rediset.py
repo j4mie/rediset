@@ -224,14 +224,14 @@ class SortedNode(Node):
 
     def members(self):
         self.create()
-        return self.rediset.redis.zrange(
+        return set(self.rediset.redis.zrange(
             self.key,
             start=0,
             end=-1,
             desc=False,
             withscores=False,
             score_cast_func=float
-        )
+        ))
 
     def contains(self, item):
         """

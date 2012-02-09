@@ -63,6 +63,7 @@ class SortedSetTestCase(RedisTestCase):
         s.add((2, 'b'), (3, 'c'))
 
         self.assertEqual(len(s), 3)
+        self.assertEqual(s.members(), set(['a', 'b', 'c']))
         self.assertEqual(set(s), set(['a', 'b', 'c']))
         self.assertTrue('a' in s)
         self.assertFalse('d' in s)
