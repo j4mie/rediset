@@ -118,6 +118,13 @@ class SortedSetTestCase(RedisTestCase):
 
         self.assertEqual(self.rediset.redis.zrange.call_count, 1)
 
+    def test_get_score(self):
+        s = self.rediset.SortedSet('key')
+        s.add(('a', 1), ('b', 2))
+        self.assertEqual(s.score('a'), 1)
+        self.assertEqual(s.score('b'), 2)
+        self.assertTrue(s.score('notmember') is None)
+
 
 class SortedSetOperationTestCase(RedisTestCase):
 

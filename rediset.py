@@ -252,8 +252,7 @@ class SortedNode(Node):
         """
         There is no "zismember" so we use zscore
         """
-        self.create()
-        return self.rediset.redis.zscore(self.key, item) is not None
+        return self.score(item) is not None
 
     def range(self, *args, **kwargs):
         """
@@ -281,6 +280,13 @@ class SortedNode(Node):
             if results is None:
                 raise IndexError('list index out of range')
             return results[0]
+
+    def score(self, item):
+        """
+        Get the score for the given sorted set member
+        """
+        self.create()
+        return self.rediset.redis.zscore(self.key, item)
 
 
 class SortedSetNode(SortedNode):
