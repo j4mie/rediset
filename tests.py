@@ -59,8 +59,8 @@ class SortedSetTestCase(RedisTestCase):
     def test_basic_sorted_set(self):
         s = self.rediset.SortedSet('key')
 
-        s.add((1, 'a'))
-        s.add((2, 'b'), (3, 'c'))
+        s.add(('a', 1))
+        s.add(('b', 2), ('c', 3))
 
         self.assertEqual(len(s), 3)
         self.assertEqual(s.members(), ['a', 'b', 'c'])
@@ -75,7 +75,7 @@ class SortedSetTestCase(RedisTestCase):
 
     def test_get_item(self):
         s = self.rediset.SortedSet('key')
-        s.add((1, 'a'), (2, 'b'), (3, 'c'))
+        s.add(('a', 1), ('b', 2), ('c', 3))
 
         self.assertEqual(s.get(0), 'a')
         self.assertEqual(s.get(2), 'c')
@@ -89,7 +89,7 @@ class SortedSetTestCase(RedisTestCase):
 
     def test_get_range(self):
         s = self.rediset.SortedSet('key')
-        s.add((1, 'a'), (2, 'b'), (3, 'c'))
+        s.add(('a', 1), ('b', 2), ('c', 3))
 
         self.assertEqual(s.range(0, 1), ['a', 'b'])
         self.assertEqual(s.range(1, 2), ['b', 'c'])
@@ -105,7 +105,7 @@ class SortedSetTestCase(RedisTestCase):
 
     def test_iteration(self):
         s = self.rediset.SortedSet('key')
-        s.add((1, 'a'), (2, 'b'), (3, 'c'))
+        s.add(('a', 1), ('b', 2), ('c', 3))
 
         results = [item for item in s]
         self.assertEqual(results, ['a', 'b', 'c'])
@@ -180,8 +180,8 @@ class IntersectionTestCase(RedisTestCase):
         s1 = self.rediset.SortedSet('key1')
         s2 = self.rediset.SortedSet('key2')
 
-        s1.add((1, 'a'), (2, 'b'))
-        s2.add((1, 'b'), (2, 'c'))
+        s1.add(('a', 2), ('b', 2))
+        s2.add(('b', 1), ('c', 2))
 
         i = self.rediset.Intersection(s1, s2)
         self.assertEqual(len(i), 1)
@@ -232,8 +232,8 @@ class UnionTestCase(RedisTestCase):
         s1 = self.rediset.SortedSet('key1')
         s2 = self.rediset.SortedSet('key2')
 
-        s1.add((1, 'a'), (2, 'b'))
-        s2.add((2, 'b'), (4, 'c'))
+        s1.add(('a', 1), ('b', 2))
+        s2.add(('b', 2), ('c', 4))
 
         u = self.rediset.Union(s1, s2)
         self.assertEqual(len(u), 3)

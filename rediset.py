@@ -281,7 +281,7 @@ class SortedSetNode(SortedNode):
         self.key = key
 
     def add(self, *values):
-        values = dict([(name, score) for score, name in values])
+        values = dict(values)
         self.rediset.redis.zadd(self.key, **values)
 
     def remove(self, *values):
