@@ -52,10 +52,12 @@ class SortedSetTestCase(RedisTestCase):
     def test_basic_sorted_set(self):
         s = self.rediset.SortedSet('key')
 
-        s.add((1, 'foo'))
-        s.add((2, 'bar'), (3, 'baz'))
+        s.add((1, 'a'))
+        s.add((2, 'b'), (3, 'c'))
 
         self.assertEqual(len(s), 3)
+
+        self.assertEqual(set(s), set(['a', 'b', 'c']))
 
 
 class IntersectionTestCase(RedisTestCase):

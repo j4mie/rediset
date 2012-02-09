@@ -103,6 +103,10 @@ class RedisWrapper(object):
         key = self.create_key(key)
         return self.redis.zcard(key)
 
+    def zrange(self, key, *args, **kwargs):
+        key = self.create_key(key)
+        return self.redis.zrange(key, *args, **kwargs)
+
     def exists(self, key):
         key = self.create_key(key)
         return self.redis.exists(key)
@@ -197,6 +201,17 @@ class SortedNode(Node):
     def cardinality(self):
         self.create()
         return self.rediset.redis.zcard(self.key)
+
+    def members(self):
+        self.create()
+        return self.rediset.redis.zrange(
+            self.key,
+            start=0,
+            end=-1,
+            desc=False,
+            withscores=False,
+            score_cast_func=float
+        )
 
 
 class SortedSetNode(SortedNode):
