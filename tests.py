@@ -63,7 +63,7 @@ class SortedSetTestCase(RedisTestCase):
         s.add((2, 'b'), (3, 'c'))
 
         self.assertEqual(len(s), 3)
-        self.assertEqual(s.members(), set(['a', 'b', 'c']))
+        self.assertEqual(s.members(), ['a', 'b', 'c'])
         self.assertEqual(set(s), set(['a', 'b', 'c']))
         self.assertTrue('a' in s)
         self.assertFalse('d' in s)
@@ -72,6 +72,45 @@ class SortedSetTestCase(RedisTestCase):
         self.assertFalse(s.contains('a'))
         s.remove('b', 'c')
         self.assertEqual(len(s), 0)
+
+    def test_get_item(self):
+        s = self.rediset.SortedSet('key')
+        s.add((1, 'a'), (2, 'b'), (3, 'c'))
+
+        self.assertEqual(s.get(0), 'a')
+        self.assertEqual(s.get(2), 'c')
+        self.assertTrue(s.get(3) is None)
+        self.assertEqual(s.get(0, withscores=True), ('a', 1.0))
+
+        self.assertEqual(s[0], 'a')
+        self.assertEqual(s[2], 'c')
+        with self.assertRaises(IndexError):
+            s[3]
+
+    def test_get_range(self):
+        s = self.rediset.SortedSet('key')
+        s.add((1, 'a'), (2, 'b'), (3, 'c'))
+
+        self.assertEqual(s.range(0, 1), ['a', 'b'])
+        self.assertEqual(s.range(1, 2), ['b', 'c'])
+        self.assertEqual(s.range(2, 10), ['c'])
+
+        self.assertEqual(s.range(0, 2, withscores=True), [('a', 1), ('b', 2), ('c', 3)])
+
+        self.assertEqual(s[0:1], ['a', 'b'])
+
+        self.assertEqual(s[1:], ['b', 'c'])
+        self.assertEqual(s[:1], ['a', 'b'])
+        self.assertEqual(s[0:10], ['a', 'b', 'c'])
+
+    def test_iteration(self):
+        s = self.rediset.SortedSet('key')
+        s.add((1, 'a'), (2, 'b'), (3, 'c'))
+
+        results = [item for item in s]
+        self.assertEqual(results, ['a', 'b', 'c'])
+
+        self.assertEqual(self.rediset.redis.zrange.call_count, 1)
 
 
 class SortedSetOperationTestCase(RedisTestCase):
@@ -146,7 +185,7 @@ class IntersectionTestCase(RedisTestCase):
 
         i = self.rediset.Intersection(s1, s2)
         self.assertEqual(len(i), 1)
-        self.assertEqual(i.members(), set(['b']))
+        self.assertEqual(i.members(), ['b'])
 
         i2 = s1.intersection(s2)
         self.assertEqual(i.members(), i2.members())
@@ -194,11 +233,11 @@ class UnionTestCase(RedisTestCase):
         s2 = self.rediset.SortedSet('key2')
 
         s1.add((1, 'a'), (2, 'b'))
-        s2.add((3, 'b'), (4, 'c'))
+        s2.add((2, 'b'), (4, 'c'))
 
         u = self.rediset.Union(s1, s2)
         self.assertEqual(len(u), 3)
-        self.assertEqual(u.members(), set(['a', 'b', 'c']))
+        self.assertEqual(u.members(), ['a', 'b', 'c'])
 
         u2 = s1.union(s2)
         self.assertEqual(u.members(), u2.members())

@@ -232,16 +232,8 @@ class SortedNode(Node):
         self.create()
         return self.rediset.redis.zcard(self.key)
 
-    def members(self):
-        self.create()
-        return set(self.rediset.redis.zrange(
-            self.key,
-            start=0,
-            end=-1,
-            desc=False,
-            withscores=False,
-            score_cast_func=float
-        ))
+    def members(self, *args, **kwargs):
+        return self.range(start=0, end=-1, *args, **kwargs)
 
     def contains(self, item):
         """
@@ -249,6 +241,33 @@ class SortedNode(Node):
         """
         self.create()
         return self.rediset.redis.zscore(self.key, item) is not None
+
+    def range(self, *args, **kwargs):
+        """
+        Get a range of items from the sorted set. See redis-py docs for details
+        """
+        self.create()
+        return self.rediset.redis.zrange(self.key, *args, **kwargs)
+
+    def get(self, index, *args, **kwargs):
+        """
+        Get a single item from the set by index. Equivalent to s[3] but
+        returns None if the index is out of range.
+        """
+        result = self.range(start=index, end=index, *args, **kwargs)
+        if result:
+            return result[0]
+
+    def __getitem__(self, arg):
+        if isinstance(arg, slice):
+            start = arg.start or 0
+            end = arg.stop or -1
+            return self.range(start, end)
+        else:
+            results = self.get(arg)
+            if results is None:
+                raise IndexError('list index out of range')
+            return results[0]
 
 
 class SortedSetNode(SortedNode):
