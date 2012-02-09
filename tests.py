@@ -60,6 +60,11 @@ class SortedSetTestCase(RedisTestCase):
         self.assertTrue('a' in s)
         self.assertFalse('d' in s)
 
+        s.remove('a')
+        self.assertFalse(s.contains('a'))
+        s.remove('b', 'c')
+        self.assertEqual(len(s), 0)
+
 
 class IntersectionTestCase(RedisTestCase):
 

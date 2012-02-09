@@ -103,6 +103,10 @@ class RedisWrapper(object):
         key = self.create_key(key)
         return self.redis.zcard(key)
 
+    def zrem(self, key, *values):
+        key = self.create_key(key)
+        return self.redis.zrem(key, *values)
+
     def zrange(self, key, *args, **kwargs):
         key = self.create_key(key)
         return self.redis.zrange(key, *args, **kwargs)
@@ -238,6 +242,9 @@ class SortedSetNode(SortedNode):
     def add(self, *values):
         values = dict([(name, score) for score, name in values])
         self.rediset.redis.zadd(self.key, **values)
+
+    def remove(self, *values):
+        self.rediset.redis.zrem(self.key, *values)
 
 
 class OperationNode(Node):
