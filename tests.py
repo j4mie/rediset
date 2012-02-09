@@ -73,6 +73,12 @@ class SortedSetTestCase(RedisTestCase):
         s.remove('b', 'c')
         self.assertEqual(len(s), 0)
 
+    def test_get_members(self):
+        s = self.rediset.SortedSet('key')
+        s.add(('a', 1), ('b', 2), ('c', 3))
+        self.assertEqual(s.members(), ['a', 'b', 'c'])
+        self.assertEqual(s.members(withscores=True), [('a', 1), ('b', 2), ('c', 3)])
+
     def test_get_item(self):
         s = self.rediset.SortedSet('key')
         s.add(('a', 1), ('b', 2), ('c', 3))
