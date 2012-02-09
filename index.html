@@ -1,88 +1,39 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset='utf-8'>
+    <head>
+        <title>rediset</title>
+        <link rel="stylesheet" href="./_dmedia/bootstrap.css"/>
+        <link rel="stylesheet" href="./_dmedia/tango.css"/>
+        <link rel="stylesheet/less" type="text/css" href="./_dmedia/style.less">
+        <script src="./_dmedia/less.js" type="text/javascript">
+        </script>
+    </head>
+    <body class="index">
+        <div class="wrap">
+            <header><h1><a href="">rediset</a></h1></header>
+                <div class="markdown">
+<p><img src="http://redis.io/images/redis.png" style="display: block; margin: 30px auto;" alt="Redis logo" title="Redis logo" /></p>
+<p><strong><span style="display: block; text-align: center; margin-bottom: 20px;">Composable, cachable, lazy trees of Redis set operations.</span></strong></p>
+<div class="codehilite"><pre><span class="n">from</span> <span class="n">rediset</span> <span class="nb">import</span> <span class="n">Rediset</span>
+<span class="n">rs</span> <span class="o">=</span> <span class="n">Rediset</span><span class="p">()</span>
 
-  <title>j4mie/rediset @ GitHub</title>
+<span class="n">result</span> <span class="o">=</span> <span class="n">rs</span><span class="o">.</span><span class="n">Intersection</span><span class="p">(</span><span class="s">&#39;key1&#39;</span><span class="p">,</span> <span class="n">rs</span><span class="o">.</span><span class="n">Union</span><span class="p">(</span><span class="s">&#39;key1&#39;</span><span class="p">,</span> <span class="s">&#39;key2&#39;</span><span class="p">))</span>
+</pre></div>
 
-  <style type="text/css">
-    body {
-      margin-top: 1.0em;
-      background-color: #a07973;
-      font-family: Helvetica, Arial, FreeSans, san-serif;
-      color: #000000;
-    }
-    #container {
-      margin: 0 auto;
-      width: 700px;
-    }
-    h1 { font-size: 3.8em; color: #5f868c; margin-bottom: 3px; }
-    h1 .small { font-size: 0.4em; }
-    h1 a { text-decoration: none }
-    h2 { font-size: 1.5em; color: #5f868c; }
-    h3 { text-align: center; color: #5f868c; }
-    a { color: #5f868c; }
-    .description { font-size: 1.2em; margin-bottom: 30px; margin-top: 30px; font-style: italic;}
-    .download { float: right; }
-    pre { background: #000; color: #fff; padding: 15px;}
-    hr { border: 0; width: 80%; border-bottom: 1px solid #aaa}
-    .footer { text-align:center; padding-top:30px; font-style: italic; }
-  </style>
-</head>
 
-<body>
-  <a href="https://github.com/j4mie/rediset"><img style="position: absolute; top: 0; right: 0; border: 0;" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
-
-  <div id="container">
-
-    <div class="download">
-      <a href="https://github.com/j4mie/rediset/zipball/master">
-        <img border="0" width="90" src="https://github.com/images/modules/download/zip.png"></a>
-      <a href="https://github.com/j4mie/rediset/tarball/master">
-        <img border="0" width="90" src="https://github.com/images/modules/download/tar.png"></a>
-    </div>
-
-    <h1><a href="https://github.com/j4mie/rediset">rediset</a>
-      <span class="small">by <a href="https://github.com/j4mie">j4mie</a></span></h1>
-
-    <div class="description">
-      Composable, cacheable, lazy trees of Redis set operations
-    </div>
-
-    
-
-    
-
-    
-
-    
-
-    
-      <h2>Authors</h2>
-      <p>Jamie Matthews (jamie.matthews@gmail.com)<br/>      </p>
-    
-
-    
-      <h2>Contact</h2>
-      <p>Jamie Matthews (jamie.matthews@gmail.com)<br/>      </p>
-    
-
-    <h2>Download</h2>
-    <p>
-      You can download this project in either
-      <a href="https://github.com/j4mie/rediset/zipball/master">zip</a> or
-      <a href="https://github.com/j4mie/rediset/tarball/master">tar formats.
-    </p>
-    <p>You can also clone the project with <a href="http://git-scm.com">Git</a>
-      by running:
-      <pre>$ git clone git://github.com/j4mie/rediset</pre>
-    </p>
-
-    <div class="footer">
-      get the source code on GitHub : <a href="https://github.com/j4mie/rediset">j4mie/rediset</a>
-    </div>
-
-  </div>
-
-</body>
+<h4 id="what-is-it-good-for">What is it good for?:</h4>
+<ul>
+<li>High-speed statistics</li>
+<li>Faceted search</li>
+<li>Inverted indexes</li>
+<li>Just a nice way of working with persisent sets in Python</li>
+<li>...any other suggestions?</li>
+</ul>
+<p>Get the code at <a href="https://github.com/j4mie/rediset">GitHub</a>.</p><h2>Table of Contents</h2><ol class="toc"><li><a href="api-overview/"> API Overview</a></li><li><a href="sets/"> Sets</a></li><li><a href="set-operations/"> Set operations</a></li><li><a href="caching-laziness/"> Caching & Laziness</a></li><li><a href="faq/"> FAQ</a></li></ol>
+                </div>
+            <footer><p><a href="http://github.com/j4mie/rediset"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://a248.e.akamai.net/assets.github.com/img/e6bef7a091f5f3138b8cd40bc3e114258dd68ddf/687474703a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f7265645f6161303030302e706e67" alt="Fork me on GitHub"></a></p>
+<p><a href="http://dabapps.com"><img src="http://dabapps.com/static/media/images/template/dabapps-logo.png" width="100" alt="DabApps logo" title="DabApps logo" /></a></p>
+<p>Created by Jamie Matthews. <a href="http://twitter.com/j4mie">Follow me on Twitter</a>.</p></footer>
+        </div>
+    </body>
 </html>

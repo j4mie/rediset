@@ -1,0 +1,35 @@
+<html><head><title> FAQ / rediset</title><link rel="stylesheet" href="../_dmedia/bootstrap.css"/><link rel="stylesheet" href="../_dmedia/tango.css"/><link rel="stylesheet/less" type="text/css" href="../_dmedia/style.less"/><script src="../_dmedia/less.js" type="text/javascript">
+        </script></head><body class="content">
+        <div class="wrap">
+            <header><h1><a href="..">rediset</a></h1></header><div class="markdown">
+<h1 id="faq"><a href="">FAQ</a></h1><h2 id="why-not-copy-pythons-existing-set-api">Why not copy Python's existing set API?</h2>
+<p>Python's <code>set</code> API is based around performing operations <em>between</em> sets:</p>
+<div class="codehilite"><pre><span class="o">&gt;&gt;&gt;</span> <span class="n">set</span><span class="p">([</span><span class="s">'a'</span><span class="p">,</span> <span class="s">'b'</span><span class="p">,</span> <span class="s">'c'</span><span class="p">])</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">set</span><span class="p">([</span><span class="s">'a'</span><span class="p">,</span> <span class="s">'b'</span><span class="p">]))</span>
+</pre></div>
+
+
+<p>This doesn't quite feel right when working with Redis, which works in terms
+of <em>operations</em> performed on <em>multiple sets</em>. It felt more natural to treat
+the operations themselves as first-class citizens, as well as the sets.</p>
+<p>You can, optionally, use the more Python-like version of the API:</p>
+<div class="codehilite"><pre><span class="o">&gt;&gt;&gt;</span> <span class="n">s1</span> <span class="o">=</span> <span class="n">rs</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span><span class="s">'key1'</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">s2</span> <span class="o">=</span> <span class="n">rs</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span><span class="s">'key2'</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">i</span> <span class="o">=</span> <span class="n">s1</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">s2</span><span class="p">)</span>
+</pre></div>
+
+
+<h2 id="urgh-why-do-those-methods-start-with-capital-letters">Urgh, why do those methods start with capital letters?</h2>
+<p>Just pretend you're instantiating a class instead of calling a method. If you
+really hate the way it looks, start your program like this:</p>
+<div class="codehilite"><pre><span class="n">from</span> <span class="n">rediset</span> <span class="nb">import</span> <span class="n">Rediset</span>
+
+<span class="n">rs</span> <span class="o">=</span> <span class="n">Rediset</span><span class="p">()</span>
+<span class="n">Set</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Intersection</span><span class="p">,</span> <span class="n">Difference</span> <span class="o">=</span> <span class="n">rs</span><span class="o">.</span><span class="n">Set</span><span class="p">,</span> <span class="n">rs</span><span class="o">.</span><span class="n">Union</span><span class="p">,</span> <span class="n">rs</span><span class="o">.</span><span class="n">Intersection</span><span class="p">,</span> <span class="n">rs</span><span class="o">.</span><span class="n">Difference</span>
+
+<span class="n">result</span> <span class="o">=</span> <span class="n">Union</span><span class="p">(</span><span class="n">Set</span><span class="p">(</span><span class="s">'key1'</span><span class="p">),</span> <span class="n">Intersection</span><span class="p">(</span><span class="s">'key2'</span><span class="p">,</span> <span class="s">'key3'</span><span class="p">))</span>
+</pre></div>
+                </div>
+            <footer><p><a href="http://github.com/j4mie/rediset"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://a248.e.akamai.net/assets.github.com/img/e6bef7a091f5f3138b8cd40bc3e114258dd68ddf/687474703a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f7265645f6161303030302e706e67" alt="Fork me on GitHub"/></a></p>
+<p><a href="http://dabapps.com"><img src="http://dabapps.com/static/media/images/template/dabapps-logo.png" width="100" alt="DabApps logo" title="DabApps logo"/></a></p>
+<p>Created by Jamie Matthews. <a href="http://twitter.com/j4mie">Follow me on Twitter</a>.</p></footer></div>
+    </body></html>

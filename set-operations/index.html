@@ -1,0 +1,81 @@
+<html><head><title> Set operations / rediset</title><link rel="stylesheet" href="../_dmedia/bootstrap.css"/><link rel="stylesheet" href="../_dmedia/tango.css"/><link rel="stylesheet/less" type="text/css" href="../_dmedia/style.less"/><script src="../_dmedia/less.js" type="text/javascript">
+        </script></head><body class="content">
+        <div class="wrap">
+            <header><h1><a href="..">rediset</a></h1></header><div class="markdown">
+<h1 id="set-operations"><a href="">Set operations</a></h1><p>Rediset's main purpose is to perform operations on sets, and then compose the
+results. The operations that Rediset provides are <em>Union</em>, <em>Intersection</em> and
+<em>Difference</em>. See the <a href="http://redis.io/commands#set">Redis documentation</a> for
+full details on the semantics of these operations.</p>
+<div class="codehilite"><pre><span class="o">&gt;&gt;&gt;</span> <span class="n">rs</span> <span class="o">=</span> <span class="n">Rediset</span><span class="p">()</span>
+<span class="o">&gt;&gt;&gt;</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">nirvana</span> <span class="o">=</span> <span class="n">rs</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span><span class="s">'nirvana'</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">nirvana</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s">'kurt'</span><span class="p">,</span> <span class="s">'krist'</span><span class="p">,</span> <span class="s">'dave'</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">foo_fighters</span> <span class="o">=</span> <span class="n">rs</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span><span class="s">'foo_fighters'</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">foo_fighters</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s">'dave'</span><span class="p">,</span> <span class="s">'nate'</span><span class="p">,</span> <span class="s">'taylor'</span><span class="p">,</span> <span class="s">'chris'</span><span class="p">,</span> <span class="s">'pat'</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">nirvana_and_ff</span> <span class="o">=</span> <span class="n">rs</span><span class="o">.</span><span class="n">Intersection</span><span class="p">(</span><span class="n">nirvana</span><span class="p">,</span> <span class="n">foo_fighters</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">set</span><span class="p">(</span><span class="n">nirvana_and_ff</span><span class="p">)</span>
+<span class="n">set</span><span class="p">([</span><span class="s">'dave'</span><span class="p">])</span>
+</pre></div>
+
+
+<p>Simple so far. But what if we wanted to know everyone who has been in either
+Nirvana <em>and</em> the Foo Fighters, <strong>or</strong> Blur <em>and</em> Gorillaz? We need to create
+a Union of the two Intersections:</p>
+<div class="codehilite"><pre><span class="o">&gt;&gt;&gt;</span> <span class="n">blur</span> <span class="o">=</span> <span class="n">rs</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span><span class="s">'blur'</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">blur</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s">'damon'</span><span class="p">,</span> <span class="s">'graham'</span><span class="p">,</span> <span class="s">'alex'</span><span class="p">,</span> <span class="s">'dave'</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">gorillaz</span> <span class="o">=</span> <span class="n">rs</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span><span class="s">'gorillaz'</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">gorillaz</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s">'damon'</span><span class="p">,</span> <span class="s">'jamie'</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">result</span> <span class="o">=</span> <span class="n">rs</span><span class="o">.</span><span class="n">Union</span><span class="p">(</span>
+<span class="o">...</span>     <span class="n">rs</span><span class="o">.</span><span class="n">Intersection</span><span class="p">(</span><span class="n">nirvana</span><span class="p">,</span> <span class="n">foo_fighters</span><span class="p">),</span>
+<span class="o">...</span>     <span class="n">rs</span><span class="o">.</span><span class="n">Intersection</span><span class="p">(</span><span class="n">blur</span><span class="p">,</span> <span class="n">gorillaz</span><span class="p">)</span>
+<span class="o">...</span> <span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">set</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+<span class="n">set</span><span class="p">([</span><span class="s">'dave'</span><span class="p">,</span> <span class="s">'damon'</span><span class="p">])</span>
+</pre></div>
+
+
+<p>You can nest these operations as deeply as you like (see below for details).</p>
+<h2 id="notes-on-operations">Notes on operations</h2>
+<p>You can't mutate an operation (Union, Intersection or Difference) directly:</p>
+<div class="codehilite"><pre><span class="o">&gt;&gt;&gt;</span> <span class="n">u</span> <span class="o">=</span> <span class="n">rs</span><span class="o">.</span><span class="n">Union</span><span class="p">(</span><span class="n">rs</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span><span class="s">'key1'</span><span class="p">),</span> <span class="n">rs</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span><span class="s">'bar'</span><span class="p">))</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">u</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s">'a'</span><span class="p">)</span>
+<span class="n">Traceback</span> <span class="p">(</span><span class="n">most</span> <span class="n">recent</span> <span class="n">call</span> <span class="k">last</span><span class="p">):</span>
+  <span class="n">File</span> <span class="s">"&lt;input&gt;"</span><span class="p">,</span> <span class="n">line</span> <span class="mi">1</span><span class="p">,</span> <span class="n">in</span> <span class="sr">&lt;module&gt;</span>
+<span class="n">AttributeError:</span> <span class="s">'UnionNode'</span> <span class="n">object</span> <span class="n">has</span> <span class="nb">no</span> <span class="n">attribute</span> <span class="s">'add'</span>
+</pre></div>
+
+
+<p>As a shortcut, if you pass a bare string to any of the operation functions, they
+will assume this is the name of a key and wrap a <code>Set</code> around it. So these three
+versions are equivalent:</p>
+<div class="codehilite"><pre><span class="o">&gt;&gt;&gt;</span> <span class="n">result</span> <span class="o">=</span> <span class="n">rs</span><span class="o">.</span><span class="n">Union</span><span class="p">(</span><span class="n">rs</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span><span class="s">'key1'</span><span class="p">),</span> <span class="n">rs</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span><span class="s">'key2'</span><span class="p">))</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">result</span> <span class="o">=</span> <span class="n">rs</span><span class="o">.</span><span class="n">Union</span><span class="p">(</span><span class="n">rs</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span><span class="s">'key1'</span><span class="p">),</span> <span class="s">'key2'</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">result</span> <span class="o">=</span> <span class="n">rs</span><span class="o">.</span><span class="n">Union</span><span class="p">(</span><span class="s">'key1'</span><span class="p">,</span> <span class="s">'key2'</span><span class="p">)</span>
+</pre></div>
+
+
+<p>Rediset also supports an optional "Python-set-like" interface for operations between sets
+(and other operations):</p>
+<div class="codehilite"><pre><span class="o">&gt;&gt;&gt;</span> <span class="n">s1</span> <span class="o">=</span> <span class="n">rs</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span><span class="s">'key1'</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">s2</span> <span class="o">=</span> <span class="n">rs</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span><span class="s">'key2'</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">s3</span> <span class="o">=</span> <span class="n">rs</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span><span class="s">'key3'</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">i</span> <span class="o">=</span> <span class="n">s1</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">s2</span><span class="p">,</span> <span class="n">s3</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">u</span> <span class="o">=</span> <span class="n">s1</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="n">s2</span><span class="p">,</span> <span class="n">s3</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">d</span> <span class="o">=</span> <span class="n">s1</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">s2</span><span class="p">,</span> <span class="n">s3</span><span class="p">)</span>
+</pre></div>
+
+
+<h2 id="how-does-it-work">How does it work?</h2>
+<p>Set operations are performed using the <code>SUNIONSTORE</code>, <code>SINTERSTORE</code> and
+<code>SDIFFSTORE</code> commands provided by Redis. The result of an operation on
+multiple sets is stored in another set in Redis, under a key generated
+by Rediset.</p>
+                </div>
+            <footer><p><a href="http://github.com/j4mie/rediset"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://a248.e.akamai.net/assets.github.com/img/e6bef7a091f5f3138b8cd40bc3e114258dd68ddf/687474703a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f7265645f6161303030302e706e67" alt="Fork me on GitHub"/></a></p>
+<p><a href="http://dabapps.com"><img src="http://dabapps.com/static/media/images/template/dabapps-logo.png" width="100" alt="DabApps logo" title="DabApps logo"/></a></p>
+<p>Created by Jamie Matthews. <a href="http://twitter.com/j4mie">Follow me on Twitter</a>.</p></footer></div>
+    </body></html>

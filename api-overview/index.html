@@ -1,0 +1,30 @@
+<html><head><title> API Overview / rediset</title><link rel="stylesheet" href="../_dmedia/bootstrap.css"/><link rel="stylesheet" href="../_dmedia/tango.css"/><link rel="stylesheet/less" type="text/css" href="../_dmedia/style.less"/><script src="../_dmedia/less.js" type="text/javascript">
+        </script></head><body class="content">
+        <div class="wrap">
+            <header><h1><a href="..">rediset</a></h1></header><div class="markdown">
+<h1 id="api-overview"><a href="">API Overview</a></h1><p>All objects are created through an instance of the <code>Rediset</code> class.</p>
+<div class="codehilite"><pre><span class="o">&gt;&gt;&gt;</span> <span class="n">from</span> <span class="n">rediset</span> <span class="nb">import</span> <span class="n">Rediset</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">rs</span> <span class="o">=</span> <span class="n">Rediset</span><span class="p">()</span>
+</pre></div>
+
+
+<p>You can optionally provide a <code>key_prefix</code> argument to the constructor,
+which will be prepended to all keys Rediset generates. This is useful for
+namespacing your data in Redis.</p>
+<div class="codehilite"><pre><span class="o">&gt;&gt;&gt;</span> <span class="n">from</span> <span class="n">rediset</span> <span class="nb">import</span> <span class="n">Rediset</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">rs</span> <span class="o">=</span> <span class="n">Rediset</span><span class="p">(</span><span class="n">key_prefix</span><span class="o">=</span><span class="s">'myprefix'</span><span class="p">)</span>
+</pre></div>
+
+
+<p>If you need to customise things further, you can override the Redis client
+instance Rediset uses:</p>
+<div class="codehilite"><pre><span class="o">&gt;&gt;&gt;</span> <span class="n">from</span> <span class="n">rediset</span> <span class="nb">import</span> <span class="n">Rediset</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">from</span> <span class="n">redis</span> <span class="nb">import</span> <span class="n">Redis</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">r</span> <span class="o">=</span> <span class="n">Redis</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="s">'localhost'</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">6379</span><span class="p">,</span> <span class="n">db</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">rs</span> <span class="o">=</span> <span class="n">Rediset</span><span class="p">(</span><span class="n">key_prefix</span><span class="o">=</span><span class="s">'myprefix'</span><span class="p">,</span> <span class="n">redis_client</span><span class="o">=</span><span class="n">r</span><span class="p">)</span>
+</pre></div>
+                </div>
+            <footer><p><a href="http://github.com/j4mie/rediset"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://a248.e.akamai.net/assets.github.com/img/e6bef7a091f5f3138b8cd40bc3e114258dd68ddf/687474703a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f7265645f6161303030302e706e67" alt="Fork me on GitHub"/></a></p>
+<p><a href="http://dabapps.com"><img src="http://dabapps.com/static/media/images/template/dabapps-logo.png" width="100" alt="DabApps logo" title="DabApps logo"/></a></p>
+<p>Created by Jamie Matthews. <a href="http://twitter.com/j4mie">Follow me on Twitter</a>.</p></footer></div>
+    </body></html>

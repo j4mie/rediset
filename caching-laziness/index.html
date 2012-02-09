@@ -1,0 +1,96 @@
+<html><head><title> Caching &amp; Laziness / rediset</title><link rel="stylesheet" href="../_dmedia/bootstrap.css"/><link rel="stylesheet" href="../_dmedia/tango.css"/><link rel="stylesheet/less" type="text/css" href="../_dmedia/style.less"/><script src="../_dmedia/less.js" type="text/javascript">
+        </script></head><body class="content">
+        <div class="wrap">
+            <header><h1><a href="..">rediset</a></h1></header><div class="markdown">
+<h1 id="caching-laziness"><a href="">Caching &amp; Laziness</a></h1><h2 id="caching">Caching</h2>
+<p>These generated keys are <em>volatile</em> - they are set to <code>EXPIRE</code> after some
+number of seconds. The result sets can be thought of as <em>caches</em>. Every time
+you attempt to perform an operation, Rediset will first check whether the key
+representing the cached result already exists. If it does, it won't bother
+actually asking Redis to perform the operation.</p>
+<p>Rediset provides very fine-grained control over caching. The top-level
+<code>Rediset</code> class accepts a <code>default_cache_seconds</code> constructor argument, whose
+value is used for all of the objects it produces. If this argument is not
+supplied, it defaults to 60 seconds:</p>
+<div class="codehilite"><pre><span class="o">&gt;&gt;&gt;</span> <span class="n">rs</span> <span class="o">=</span> <span class="n">Rediset</span><span class="p">()</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">u1</span> <span class="o">=</span> <span class="n">rs</span><span class="o">.</span><span class="n">Union</span><span class="p">(</span><span class="s">'key1'</span><span class="p">,</span> <span class="s">'key2'</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">u1</span><span class="o">.</span><span class="n">cache_seconds</span>
+<span class="mi">60</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">rs</span> <span class="o">=</span> <span class="n">Rediset</span><span class="p">(</span><span class="n">default_cache_seconds</span><span class="o">=</span><span class="mi">600</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">u2</span> <span class="o">=</span> <span class="n">rs</span><span class="o">.</span><span class="n">Union</span><span class="p">(</span><span class="s">'key1'</span><span class="p">,</span> <span class="s">'key2'</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">u2</span><span class="o">.</span><span class="n">cache_seconds</span>
+<span class="mi">600</span>
+</pre></div>
+
+
+<p>You can also override this default cache timeout by passing the <code>cache_seconds</code>
+argument to any of the operation functions.</p>
+<div class="codehilite"><pre><span class="o">&gt;&gt;&gt;</span> <span class="n">rs</span> <span class="o">=</span> <span class="n">Rediset</span><span class="p">(</span><span class="n">default_cache_seconds</span><span class="o">=</span><span class="mi">600</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">u3</span> <span class="o">=</span> <span class="n">rs</span><span class="o">.</span><span class="n">Union</span><span class="p">(</span><span class="s">'key1'</span><span class="p">,</span> <span class="s">'key2'</span><span class="p">,</span> <span class="n">cache_seconds</span><span class="o">=</span><span class="mi">6000</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">u3</span><span class="o">.</span><span class="n">cache_seconds</span>
+<span class="mi">6000</span>
+</pre></div>
+
+
+<h2 id="laziness">Laziness</h2>
+<p>When you create a tree of operations with Rediset, <em>nothing happens</em>. The
+operations are only performed in Redis when you actually attempt to inspect
+the contents of the result set - by calling <code>len(result)</code> or <code>'foo' in
+result</code> for example.</p>
+<p>Rediset starts to shine when you need to manipulate trees of sets and
+operations:</p>
+<div class="codehilite"><pre><span class="n">result</span> <span class="o">=</span> <span class="n">rs</span><span class="o">.</span><span class="n">Union</span><span class="p">(</span>
+    <span class="n">rs</span><span class="o">.</span><span class="n">Intersection</span><span class="p">(</span>
+        <span class="n">rs</span><span class="o">.</span><span class="n">Difference</span><span class="p">(</span>
+            <span class="n">rs</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span><span class="s">'key1'</span><span class="p">),</span>
+            <span class="n">rs</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span><span class="s">'key2'</span><span class="p">)</span>
+        <span class="p">),</span>
+        <span class="n">rs</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span><span class="s">'key3'</span><span class="p">)</span>
+    <span class="p">),</span>
+    <span class="n">rs</span><span class="o">.</span><span class="n">Difference</span><span class="p">(</span>
+        <span class="n">rs</span><span class="o">.</span><span class="n">Intersection</span><span class="p">(</span>
+            <span class="n">rs</span><span class="o">.</span><span class="n">Union</span><span class="p">(</span>
+                <span class="n">rs</span><span class="o">.</span><span class="n">Difference</span><span class="p">(</span>
+                    <span class="n">rs</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span><span class="s">'key4'</span><span class="p">),</span>
+                    <span class="n">rs</span><span class="o">.</span><span class="n">Intersection</span><span class="p">(</span>
+                        <span class="n">rs</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span><span class="s">'key5'</span><span class="p">),</span>
+                        <span class="n">rs</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span><span class="s">'key6'</span><span class="p">),</span>
+                        <span class="n">rs</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span><span class="s">'key7'</span><span class="p">)</span>
+                    <span class="p">)</span>
+                <span class="p">),</span>
+                <span class="n">rs</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span><span class="s">'key8'</span><span class="p">),</span>
+                <span class="n">rs</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span><span class="s">'key9'</span><span class="p">)</span>
+            <span class="p">),</span>
+            <span class="n">rs</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span><span class="s">'key10'</span><span class="p">),</span>
+        <span class="p">),</span>
+        <span class="n">rs</span><span class="o">.</span><span class="n">Union</span><span class="p">(</span>
+            <span class="n">rs</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span><span class="s">'key11'</span><span class="p">),</span>
+            <span class="n">rs</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span><span class="s">'key12'</span><span class="p">)</span>
+        <span class="p">),</span>
+        <span class="n">rs</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span><span class="s">'key13'</span><span class="p">)</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+
+
+<p>At this stage, <em>zero</em> calls to Redis have been made. When you ask for some
+information about the result (eg <code>len(result)</code>), Rediset walks the tree,
+performing each operation in turn. If it reaches a node representing an
+operation whose result is already cached, it stops walking down and moves on
+to the next branch.</p>
+<h2 id="benefits">Benefits</h2>
+<p>The combination of caching and lazy evaluation means you can carefully decide
+exactly how long to cache particular <em>parts</em> of your operations tree for.
+Imagine you have one big subtree that performs a large number of complex
+operations on data that change very rarely. You can set a long cache timeout
+for this branch, meaning that Redis will only need to perform the operations
+occasionally. You can then create a Union of this branch with a single Set (or
+perhaps a smaller tree) containing data that changes more rapidly, and give it
+a shorter cache timeout. This means you can easily avoid most of the work
+involved in generating your data, but still keep the final result nice and
+fresh.</p>
+                </div>
+            <footer><p><a href="http://github.com/j4mie/rediset"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://a248.e.akamai.net/assets.github.com/img/e6bef7a091f5f3138b8cd40bc3e114258dd68ddf/687474703a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f7265645f6161303030302e706e67" alt="Fork me on GitHub"/></a></p>
+<p><a href="http://dabapps.com"><img src="http://dabapps.com/static/media/images/template/dabapps-logo.png" width="100" alt="DabApps logo" title="DabApps logo"/></a></p>
+<p>Created by Jamie Matthews. <a href="http://twitter.com/j4mie">Follow me on Twitter</a>.</p></footer></div>
+    </body></html>
