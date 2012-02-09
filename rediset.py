@@ -107,6 +107,10 @@ class RedisWrapper(object):
         key = self.create_key(key)
         return self.redis.zrange(key, *args, **kwargs)
 
+    def zscore(self, key, item):
+        key = self.create_key(key)
+        return self.redis.zscore(key, item)
+
     def exists(self, key):
         key = self.create_key(key)
         return self.redis.exists(key)
@@ -212,6 +216,13 @@ class SortedNode(Node):
             withscores=False,
             score_cast_func=float
         )
+
+    def contains(self, item):
+        """
+        There is no "zismember" so we use zscore
+        """
+        self.create()
+        return self.rediset.redis.zscore(self.key, item) is not None
 
 
 class SortedSetNode(SortedNode):
