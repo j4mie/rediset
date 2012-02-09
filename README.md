@@ -10,6 +10,15 @@ Full documentation is available at [http://j4mie.github.com/rediset](http://j4mi
 
 ## Changelog
 
+#### 0.4.0
+
+* Rework documentation, now at http://j4mie.github.com/rediset
+* Add initial support for sorted sets
+
+#### 0.3.0
+
+* Ensure empty sets are cached correctly
+
 #### 0.2.0
 
 * Add support for operation between sets, eg `s1.intersection(s2)`
