@@ -1,4 +1,4 @@
-# API Overview
+# API overview
 
 All objects are created through an instance of the `Rediset` class.
 

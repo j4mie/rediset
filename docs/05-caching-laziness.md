@@ -1,4 +1,4 @@
-# Caching & Laziness
+# Caching & laziness
 
 ## Caching
 

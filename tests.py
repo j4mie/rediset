@@ -1,7 +1,14 @@
 from unittest import TestCase
 from mock import Mock
 from time import sleep
-from rediset import Rediset, RedisWrapper, SetNode, IntersectionNode
+from rediset import (
+    Rediset,
+    RedisWrapper,
+    SetNode,
+    IntersectionNode,
+    SortedIntersectionNode,
+    SortedUnionNode,
+)
 
 
 class KeyGenerationTestCase(TestCase):
@@ -47,6 +54,152 @@ class SetTestCase(RedisTestCase):
         self.assertEqual(len(s), 0)
 
 
+class SortedSetTestCase(RedisTestCase):
+
+    def test_basic_sorted_set(self):
+        s = self.rediset.SortedSet('key')
+
+        s.add(('a', 1))
+        s.add(('b', 2), ('c', 3))
+
+        self.assertEqual(len(s), 3)
+        self.assertEqual(s.members(), ['a', 'b', 'c'])
+        self.assertEqual(set(s), set(['a', 'b', 'c']))
+        self.assertTrue('a' in s)
+        self.assertFalse('d' in s)
+
+        s.remove('a')
+        self.assertFalse(s.contains('a'))
+        s.remove('b', 'c')
+        self.assertEqual(len(s), 0)
+
+    def test_get_members(self):
+        s = self.rediset.SortedSet('key')
+        s.add(('a', 1), ('b', 2), ('c', 3))
+        self.assertEqual(s.members(), ['a', 'b', 'c'])
+        self.assertEqual(s.members(withscores=True), [('a', 1), ('b', 2), ('c', 3)])
+
+    def test_get_item(self):
+        s = self.rediset.SortedSet('key')
+        s.add(('a', 1), ('b', 2), ('c', 3))
+
+        self.assertEqual(s.get(0), 'a')
+        self.assertEqual(s.get(2), 'c')
+        self.assertTrue(s.get(3) is None)
+        self.assertEqual(s.get(0, withscores=True), ('a', 1.0))
+
+        self.assertEqual(s[0], 'a')
+        self.assertEqual(s[2], 'c')
+        with self.assertRaises(IndexError):
+            s[3]
+
+    def test_get_range(self):
+        s = self.rediset.SortedSet('key')
+        s.add(('a', 1), ('b', 2), ('c', 3))
+
+        self.assertEqual(s.range(0, 1), ['a', 'b'])
+        self.assertEqual(s.range(1, 2), ['b', 'c'])
+        self.assertEqual(s.range(2, 10), ['c'])
+
+        self.assertEqual(s.range(0, 2, withscores=True), [('a', 1), ('b', 2), ('c', 3)])
+
+        self.assertEqual(s[0:1], ['a', 'b'])
+
+        self.assertEqual(s[1:], ['b', 'c'])
+        self.assertEqual(s[:1], ['a', 'b'])
+        self.assertEqual(s[0:10], ['a', 'b', 'c'])
+
+    def test_big_slice(self):
+        s = self.rediset.SortedSet('key')
+        for counter in range(100):
+            s.add((str(counter), counter))
+
+        middle = s[25:74]
+        self.assertEqual(len(middle), 50)
+
+        for item in middle:
+            pass
+
+        self.assertEqual(self.rediset.redis.zrange.call_count, 1)
+
+    def test_iteration(self):
+        s = self.rediset.SortedSet('key')
+        s.add(('a', 1), ('b', 2), ('c', 3))
+
+        results = [item for item in s]
+        self.assertEqual(results, ['a', 'b', 'c'])
+
+        self.assertEqual(self.rediset.redis.zrange.call_count, 1)
+
+    def test_get_score(self):
+        s = self.rediset.SortedSet('key')
+        s.add(('a', 1), ('b', 2))
+        self.assertEqual(s.score('a'), 1)
+        self.assertEqual(s.score('b'), 2)
+        self.assertTrue(s.score('notmember') is None)
+
+    def test_increment_and_decrement(self):
+        s = self.rediset.SortedSet('key')
+        s.add(('a', 1))
+
+        s.increment('a')
+        self.assertEqual(s.score('a'), 2)
+
+        s.increment('a', 3)
+        self.assertEqual(s.score('a'), 5)
+
+        s.increment('b')
+        self.assertEqual(s.score('b'), 1)
+
+        s.decrement('a')
+        self.assertEqual(s.score('a'), 4)
+
+        s.decrement('a', amount=2)
+        self.assertEqual(s.score('a'), 2)
+
+        result = s.increment('a')
+        self.assertEqual(result, 3)
+
+
+class SortedSetOperationTestCase(RedisTestCase):
+
+    def test_sorted_set_intersection(self):
+        s1 = self.rediset.SortedSet('key1')
+        s2 = self.rediset.SortedSet('key2')
+
+        i = self.rediset.Intersection(s1, s2)
+        self.assertTrue(isinstance(i, SortedIntersectionNode))
+
+    def test_sorted_set_union(self):
+        s1 = self.rediset.SortedSet('key1')
+        s2 = self.rediset.SortedSet('key2')
+
+        u = self.rediset.Union(s1, s2)
+        self.assertTrue(isinstance(u, SortedUnionNode))
+
+    def test_sorted_set_difference(self):
+        s1 = self.rediset.SortedSet('key1')
+        s2 = self.rediset.SortedSet('key2')
+
+        with self.assertRaises(TypeError):
+            d = self.rediset.Difference(s1, s2)
+
+    def test_mixing_types(self):
+        s1 = self.rediset.Set('key1')
+        s1.add('a', 'b')
+        s2 = self.rediset.SortedSet('key2')
+        s2.add(('a', 1))
+
+        with self.assertRaises(TypeError):
+            i = self.rediset.Intersection(s1, s2)
+
+        with self.assertRaises(TypeError):
+            u = self.rediset.Union(s1, s2)
+
+        with self.assertRaises(TypeError):
+            d = self.rediset.Difference(s1, s2)
+
+
 class IntersectionTestCase(RedisTestCase):
 
     def test_basic_intersection(self):
@@ -84,6 +237,29 @@ class IntersectionTestCase(RedisTestCase):
         i2 = self.rediset.Intersection('c', 'b', 'a')
         i3 = self.rediset.Intersection('b' ,'c', 'a')
         self.assertTrue(i1.key == i2.key == i3.key)
+
+    def test_sorted_set_intersection(self):
+        s1 = self.rediset.SortedSet('key1')
+        s2 = self.rediset.SortedSet('key2')
+
+        s1.add(('a', 2), ('b', 2))
+        s2.add(('b', 1), ('c', 2))
+
+        i = self.rediset.Intersection(s1, s2)
+        self.assertEqual(len(i), 1)
+        self.assertEqual(i.members(), ['b'])
+
+        i2 = s1.intersection(s2)
+        self.assertEqual(i.members(), i2.members())
+
+        i3 = self.rediset.Intersection(s1, s2, aggregate='SUM')
+        self.assertEqual(i3.members(withscores=True), [('b', 3)])
+
+        i4 = self.rediset.Intersection(s1, s2, aggregate='MAX')
+        self.assertEqual(i4.members(withscores=True), [('b', 2)])
+
+        i5 = self.rediset.Intersection(s1, s2, aggregate='MIN')
+        self.assertEqual(i5.members(withscores=True), [('b', 1)])
 
 
 class UnionTestCase(RedisTestCase):
@@ -123,6 +299,29 @@ class UnionTestCase(RedisTestCase):
         i2 = self.rediset.Union('c', 'b', 'a')
         i3 = self.rediset.Union('b' ,'c', 'a')
         self.assertTrue(i1.key == i2.key == i3.key)
+
+    def test_sorted_set_union(self):
+        s1 = self.rediset.SortedSet('key1')
+        s2 = self.rediset.SortedSet('key2')
+
+        s1.add(('a', 1), ('b', 2))
+        s2.add(('b', 3), ('c', 6))
+
+        u = self.rediset.Union(s1, s2)
+        self.assertEqual(len(u), 3)
+        self.assertEqual(u.members(), ['a', 'b', 'c'])
+
+        u2 = s1.union(s2)
+        self.assertEqual(u.members(), u2.members())
+
+        u3 = self.rediset.Union(s1, s2, aggregate='SUM')
+        self.assertEqual(u3.members(withscores=True), [('a', 1), ('b', 5), ('c', 6)])
+
+        u4 = self.rediset.Union(s1, s2, aggregate='MAX')
+        self.assertEqual(u4.members(withscores=True), [('a', 1), ('b', 3), ('c', 6)])
+
+        u5 = self.rediset.Union(s1, s2, aggregate='MIN')
+        self.assertEqual(u5.members(withscores=True), [('a', 1), ('b', 2), ('c', 6)])
 
 
 class DifferenceTestCase(RedisTestCase):

@@ -14,6 +14,9 @@ class Rediset(object):
     def Set(self, key):
         return SetNode(self, key)
 
+    def SortedSet(self, key):
+        return SortedSetNode(self, key)
+
     def _operation(self, cls, *items, **kwargs):
         if len(items) == 1:
             item = items[0]
@@ -21,17 +24,42 @@ class Rediset(object):
                 return self.Set(item)
             else:
                 return item
-        cache_seconds = kwargs.get('cache_seconds', self.default_cache_seconds)
-        return cls(self, items, cache_seconds=cache_seconds)
+        kwargs.setdefault('cache_seconds', self.default_cache_seconds)
+        return cls(self, items, **kwargs)
+
+    def _is_sorted(self, item):
+        return isinstance(item, SortedNode)
+
+    def _check_types(self, items):
+        """
+        Check all items are sorted, or all items are unsorted (not mixed)
+        """
+        first_is_sorted = self._is_sorted(items[0])
+        for item in items:
+            item_is_sorted = self._is_sorted(item)
+            if first_is_sorted != item_is_sorted:
+                raise TypeError('Sets and SortedSets cannot be mixed')
 
     def Intersection(self, *items, **kwargs):
-        return self._operation(IntersectionNode, *items, **kwargs)
+        self._check_types(items)
+        if self._is_sorted(items[0]):
+            return self._operation(SortedIntersectionNode, *items, **kwargs)
+        else:
+            return self._operation(IntersectionNode, *items, **kwargs)
 
     def Union(self, *items, **kwargs):
-        return self._operation(UnionNode, *items, **kwargs)
+        self._check_types(items)
+        if self._is_sorted(items[0]):
+            return self._operation(SortedUnionNode, *items, **kwargs)
+        else:
+            return self._operation(UnionNode, *items, **kwargs)
 
     def Difference(self, *items, **kwargs):
-        return self._operation(DifferenceNode, *items, **kwargs)
+        self._check_types(items)
+        if self._is_sorted(items[0]):
+            return self._operation(SortedDifferenceNode, *items, **kwargs)
+        else:
+            return self._operation(DifferenceNode, *items, **kwargs)
 
 
 class RedisWrapper(object):
@@ -91,6 +119,40 @@ class RedisWrapper(object):
     def sismember(self, key, item):
         key = self.create_key(key)
         return self.redis.sismember(key, item)
+
+    def zadd(self, key, *args, **kwargs):
+        key = self.create_key(key)
+        return self.redis.zadd(key, *args, **kwargs)
+
+    def zcard(self, key):
+        key = self.create_key(key)
+        return self.redis.zcard(key)
+
+    def zrem(self, key, *values):
+        key = self.create_key(key)
+        return self.redis.zrem(key, *values)
+
+    def zincrby(self, key, *args, **kwargs):
+        key = self.create_key(key)
+        return self.redis.zincrby(key, *args, **kwargs)
+
+    def zrange(self, key, *args, **kwargs):
+        key = self.create_key(key)
+        return self.redis.zrange(key, *args, **kwargs)
+
+    def zscore(self, key, item):
+        key = self.create_key(key)
+        return self.redis.zscore(key, item)
+
+    def zinterstore(self, dest, keys, aggregate=None):
+        dest = self.create_key(dest)
+        keys = [self.create_key(key) for key in keys]
+        return self.redis.zinterstore(dest, keys, aggregate=aggregate)
+
+    def zunionstore(self, dest, keys, aggregate=None):
+        dest = self.create_key(dest)
+        keys = [self.create_key(key) for key in keys]
+        return self.redis.zunionstore(dest, keys, aggregate=aggregate)
 
     def exists(self, key):
         key = self.create_key(key)
@@ -175,6 +237,84 @@ class SetNode(Node):
 
     def remove(self, *values):
         self.rediset.redis.srem(self.key, *values)
+
+
+class SortedNode(Node):
+
+    """
+    Represents a node in a tree of sorted sets and sorted set operations
+    """
+
+    def cardinality(self):
+        self.create()
+        return self.rediset.redis.zcard(self.key)
+
+    def members(self, *args, **kwargs):
+        return self.range(start=0, end=-1, *args, **kwargs)
+
+    def contains(self, item):
+        """
+        There is no "zismember" so we use zscore
+        """
+        return self.score(item) is not None
+
+    def range(self, *args, **kwargs):
+        """
+        Get a range of items from the sorted set. See redis-py docs for details
+        """
+        self.create()
+        return self.rediset.redis.zrange(self.key, *args, **kwargs)
+
+    def get(self, index, *args, **kwargs):
+        """
+        Get a single item from the set by index. Equivalent to s[3] but
+        returns None if the index is out of range.
+        """
+        result = self.range(start=index, end=index, *args, **kwargs)
+        if result:
+            return result[0]
+
+    def __getitem__(self, arg):
+        if isinstance(arg, slice):
+            start = arg.start or 0
+            end = arg.stop or -1
+            return self.range(start, end)
+        else:
+            results = self.get(arg)
+            if results is None:
+                raise IndexError('list index out of range')
+            return results[0]
+
+    def score(self, item):
+        """
+        Get the score for the given sorted set member
+        """
+        self.create()
+        return self.rediset.redis.zscore(self.key, item)
+
+
+class SortedSetNode(SortedNode):
+
+    """
+    Represents a Redis sorted set
+    """
+
+    def __init__(self, rediset, key):
+        self.rediset = rediset
+        self.key = key
+
+    def add(self, *values):
+        values = dict(values)
+        self.rediset.redis.zadd(self.key, **values)
+
+    def remove(self, *values):
+        self.rediset.redis.zrem(self.key, *values)
+
+    def increment(self, item, amount=1):
+        return self.rediset.redis.zincrby(self.key, item, amount)
+
+    def decrement(self, item, amount=1):
+        return self.increment(item, amount=amount * -1)
 
 
 class OperationNode(Node):
@@ -268,3 +408,71 @@ class DifferenceNode(OperationNode):
 
     def perform_operation(self):
         return self.rediset.redis.sdiffstore(self.key, self.child_keys())
+
+
+class SortedOperationNode(OperationNode, SortedNode):
+
+    """
+    Represents a set in Redis that is the computed result of an operation
+    on sorted sets
+    """
+
+    def __init__(self, *args, **kwargs):
+        self.aggregate = kwargs.pop('aggregate', 'SUM')
+        super(SortedOperationNode, self).__init__(*args, **kwargs)
+
+    def extra_key_components(self):
+        """
+        Return a key component based on the variable options passed
+        to this operation, such as aggregate
+        """
+        return "aggregate=%s" % self.aggregate
+
+
+class SortedIntersectionNode(SortedOperationNode):
+
+    """
+    Represents the result of an intersection of one or more sorted sets
+    """
+
+    @property
+    def key(self):
+        return "sortedintersection(%s)(%s)" % (
+            ",".join(sorted(self.child_keys())),
+            self.extra_key_components(),
+        )
+
+    def perform_operation(self):
+        return self.rediset.redis.zinterstore(self.key, self.child_keys(),
+                                              aggregate=self.aggregate)
+
+
+class SortedUnionNode(SortedOperationNode):
+
+    """
+    Represents the result of a union of one or more sorted sets
+    """
+
+    @property
+    def key(self):
+        return "sortedunion(%s)(%s)" % (
+            ",".join(sorted(self.child_keys())),
+            self.extra_key_components(),
+        )
+
+    def perform_operation(self):
+        return self.rediset.redis.zunionstore(self.key, self.child_keys(),
+                                              aggregate=self.aggregate)
+
+
+class SortedDifferenceNode(SortedOperationNode):
+
+    """
+    Represents the result of the difference between the first sorted
+    set and all the successive sorted sets
+
+    THIS OPERATION IS NOT SUPPORTED BY REDIS
+    """
+
+    def __new__(cls, *args, **kwargs):
+        raise TypeError("Difference operation not supported for sorted sets")
