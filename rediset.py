@@ -127,6 +127,16 @@ class RedisWrapper(object):
         key = self.create_key(key)
         return self.redis.zscore(key, item)
 
+    def zinterstore(self, dest, keys):
+        dest = self.create_key(dest)
+        keys = [self.create_key(key) for key in keys]
+        return self.redis.zinterstore(dest, keys)
+
+    def zunionstore(self, dest, keys):
+        dest = self.create_key(dest)
+        keys = [self.create_key(key) for key in keys]
+        return self.redis.zunionstore(dest, keys)
+
     def exists(self, key):
         key = self.create_key(key)
         return self.redis.exists(key)
@@ -368,7 +378,13 @@ class SortedIntersectionNode(SortedOperationNode):
     Represents the result of an intersection of one or more sorted sets
     """
 
-    pass
+    @property
+    def key(self):
+        # TODO include extra args in the key
+        return "sortedintersection(%s)" % ",".join(sorted(self.child_keys()))
+
+    def perform_operation(self):
+        return self.rediset.redis.zinterstore(self.key, self.child_keys())
 
 
 class SortedUnionNode(SortedOperationNode):
@@ -377,7 +393,13 @@ class SortedUnionNode(SortedOperationNode):
     Represents the result of a union of one or more sorted sets
     """
 
-    pass
+    @property
+    def key(self):
+        # TODO include extra args in the key
+        return "sortedunion(%s)" % ",".join(sorted(self.child_keys()))
+
+    def perform_operation(self):
+        return self.rediset.redis.zunionstore(self.key, self.child_keys())
 
 
 class SortedDifferenceNode(SortedOperationNode):

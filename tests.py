@@ -137,6 +137,19 @@ class IntersectionTestCase(RedisTestCase):
         i3 = self.rediset.Intersection('b' ,'c', 'a')
         self.assertTrue(i1.key == i2.key == i3.key)
 
+    def test_sorted_set_intersection(self):
+        s1 = self.rediset.SortedSet('key1')
+        s2 = self.rediset.SortedSet('key2')
+
+        s1.add((1, 'a'), (2, 'b'))
+        s2.add((1, 'b'), (2, 'c'))
+
+        i = self.rediset.Intersection(s1, s2)
+        self.assertEqual(len(i), 1)
+        self.assertEqual(i.members(), set(['b']))
+
+        i2 = s1.intersection(s2)
+        self.assertEqual(i.members(), i2.members())
 
 class UnionTestCase(RedisTestCase):
 
@@ -175,6 +188,20 @@ class UnionTestCase(RedisTestCase):
         i2 = self.rediset.Union('c', 'b', 'a')
         i3 = self.rediset.Union('b' ,'c', 'a')
         self.assertTrue(i1.key == i2.key == i3.key)
+
+    def test_sorted_set_union(self):
+        s1 = self.rediset.SortedSet('key1')
+        s2 = self.rediset.SortedSet('key2')
+
+        s1.add((1, 'a'), (2, 'b'))
+        s2.add((3, 'b'), (4, 'c'))
+
+        u = self.rediset.Union(s1, s2)
+        self.assertEqual(len(u), 3)
+        self.assertEqual(u.members(), set(['a', 'b', 'c']))
+
+        u2 = s1.union(s2)
+        self.assertEqual(u.members(), u2.members())
 
 
 class DifferenceTestCase(RedisTestCase):
