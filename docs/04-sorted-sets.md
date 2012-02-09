@@ -1,4 +1,4 @@
-# Sorted Sets
+# Sorted sets
 
 Rediset can also manipulate *sorted* sets.
 
