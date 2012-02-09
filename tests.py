@@ -125,6 +125,28 @@ class SortedSetTestCase(RedisTestCase):
         self.assertEqual(s.score('b'), 2)
         self.assertTrue(s.score('notmember') is None)
 
+    def test_increment_and_decrement(self):
+        s = self.rediset.SortedSet('key')
+        s.add(('a', 1))
+
+        s.increment('a')
+        self.assertEqual(s.score('a'), 2)
+
+        s.increment('a', 3)
+        self.assertEqual(s.score('a'), 5)
+
+        s.increment('b')
+        self.assertEqual(s.score('b'), 1)
+
+        s.decrement('a')
+        self.assertEqual(s.score('a'), 4)
+
+        s.decrement('a', amount=2)
+        self.assertEqual(s.score('a'), 2)
+
+        result = s.increment('a')
+        self.assertEqual(result, 3)
+
 
 class SortedSetOperationTestCase(RedisTestCase):
 

@@ -49,6 +49,12 @@ functions in redis-py, so please look at its documentation for more information.
     [('a', 1.0), ('c', 3.0)]
     >>> s.members(withscores=True, score_cast_func=int)
     [('a', 1), ('c', 3)]
+    >>> s.score('c')
+    3.0
+    >>> s.increment('c')
+    4.0
+    >>> s.decrement('c', amount=2)
+    2.0
 
 ## Sorted set operations
 
