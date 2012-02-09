@@ -5,7 +5,7 @@
     from rediset import Rediset
     rs = Rediset()
 
-    result = rs.Intersection('key1', rs.Union('key1', 'key2'))
+    result = rs.Intersection('key1', rs.Union('key2', 'key3'))
 
 #### What is it good for?:
 
