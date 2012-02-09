@@ -109,6 +109,19 @@ class SortedSetTestCase(RedisTestCase):
         self.assertEqual(s[:1], ['a', 'b'])
         self.assertEqual(s[0:10], ['a', 'b', 'c'])
 
+    def test_big_slice(self):
+        s = self.rediset.SortedSet('key')
+        for counter in range(100):
+            s.add((str(counter), counter))
+
+        middle = s[25:74]
+        self.assertEqual(len(middle), 50)
+
+        for item in middle:
+            pass
+
+        self.assertEqual(self.rediset.redis.zrange.call_count, 1)
+
     def test_iteration(self):
         s = self.rediset.SortedSet('key')
         s.add(('a', 1), ('b', 2), ('c', 3))
