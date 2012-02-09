@@ -142,6 +142,21 @@ class SortedSetOperationTestCase(RedisTestCase):
         with self.assertRaises(TypeError):
             d = self.rediset.Difference(s1, s2)
 
+    def test_mixing_types(self):
+        s1 = self.rediset.Set('key1')
+        s1.add('a', 'b')
+        s2 = self.rediset.SortedSet('key2')
+        s2.add(('a', 1))
+
+        with self.assertRaises(TypeError):
+            i = self.rediset.Intersection(s1, s2)
+
+        with self.assertRaises(TypeError):
+            u = self.rediset.Union(s1, s2)
+
+        with self.assertRaises(TypeError):
+            d = self.rediset.Difference(s1, s2)
+
 
 class IntersectionTestCase(RedisTestCase):
 

@@ -30,19 +30,32 @@ class Rediset(object):
     def _is_sorted(self, item):
         return isinstance(item, SortedNode)
 
+    def _check_types(self, items):
+        """
+        Check all items are sorted, or all items are unsorted (not mixed)
+        """
+        first_is_sorted = self._is_sorted(items[0])
+        for item in items:
+            item_is_sorted = self._is_sorted(item)
+            if first_is_sorted != item_is_sorted:
+                raise TypeError('Sets and SortedSets cannot be mixed')
+
     def Intersection(self, *items, **kwargs):
+        self._check_types(items)
         if self._is_sorted(items[0]):
             return self._operation(SortedIntersectionNode, *items, **kwargs)
         else:
             return self._operation(IntersectionNode, *items, **kwargs)
 
     def Union(self, *items, **kwargs):
+        self._check_types(items)
         if self._is_sorted(items[0]):
             return self._operation(SortedUnionNode, *items, **kwargs)
         else:
             return self._operation(UnionNode, *items, **kwargs)
 
     def Difference(self, *items, **kwargs):
+        self._check_types(items)
         if self._is_sorted(items[0]):
             return self._operation(SortedDifferenceNode, *items, **kwargs)
         else:

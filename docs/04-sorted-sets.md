@@ -71,3 +71,12 @@ is because these are the only sorted set operations supported by Redis).
     >>> i3 = rs.Intersection(s1, s2, aggregate='MIN') # custom aggregation
     >>> i3.members(withscores=True)
     [('b', 2.0)]
+
+Note that you can't mix sets with sorted sets:
+
+    >>> s1 = rs.SortedSet('key1')
+    >>> s2 = rs.Set('key2')
+    >>> s1.add(('a', 1), ('b', 2))
+    >>> s2.add('c')
+    >>> i = rs.Intersection(s1, s2)
+    TypeError: Sets and SortedSets cannot be mixed
