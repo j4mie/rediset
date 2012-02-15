@@ -3,7 +3,6 @@ from mock import Mock
 from time import sleep
 from rediset import (
     Rediset,
-    RedisWrapper,
     SetNode,
     IntersectionNode,
     SortedIntersectionNode,
@@ -14,8 +13,8 @@ from rediset import (
 class KeyGenerationTestCase(TestCase):
 
     def test_key_generation(self):
-        rc = RedisWrapper(key_prefix='some-prefix')
-        key = rc.create_key('foo')
+        rs = Rediset(key_prefix='some-prefix')
+        key = rs.create_key('foo')
         self.assertEqual(key, 'some-prefix:foo')
 
 
@@ -28,7 +27,7 @@ class RedisTestCase(TestCase):
         self.rediset.redis = Mock(wraps=self.rediset.redis)
 
     def tearDown(self):
-        redis = self.rediset.redis.redis
+        redis = self.rediset.redis
         keys = redis.keys('%s*' % self.PREFIX)
         if keys:
             redis.delete(*keys)
@@ -439,9 +438,9 @@ class ConversionTestCase(RedisTestCase):
         s1 = self.rediset.Set('key1')
         s1.add('a', 'b', 'c')
         self.assertTrue('a' in s1)
-        self.rediset.redis.sismember.assert_called_with('key1', 'a')
+        self.rediset.redis.sismember.assert_called_with('%s:key1' % self.PREFIX, 'a')
         self.assertFalse('x' in s1)
-        self.rediset.redis.sismember.assert_called_with('key1', 'x')
+        self.rediset.redis.sismember.assert_called_with('%s:key1' % self.PREFIX, 'x')
 
 
 class CachingTestCase(RedisTestCase):
@@ -469,13 +468,13 @@ class CachingTestCase(RedisTestCase):
         len(intersection)
         len(intersection)
 
-        self.assertEqual(intersection.rediset.redis.sinterstore.call_count, 1)
+        self.assertEqual(intersection.rs.redis.sinterstore.call_count, 1)
 
         sleep(2)
 
         len(intersection)
 
-        self.assertEqual(intersection.rediset.redis.sinterstore.call_count, 2)
+        self.assertEqual(intersection.rs.redis.sinterstore.call_count, 2)
 
     def test_caching_empty_sets(self):
         s1 = self.rediset.Set('key1')
@@ -489,4 +488,4 @@ class CachingTestCase(RedisTestCase):
         len(intersection)
         len(intersection)
 
-        self.assertEqual(intersection.rediset.redis.sinterstore.call_count, 1)
+        self.assertEqual(intersection.rs.redis.sinterstore.call_count, 1)

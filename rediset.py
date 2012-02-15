@@ -8,8 +8,15 @@ class Rediset(object):
     """
 
     def __init__(self, key_prefix=None, default_cache_seconds=60, redis_client=None):
-        self.redis = RedisWrapper(key_prefix, client=redis_client)
+        self.key_prefix = key_prefix
+        self.redis = redis_client or redis.Redis()
         self.default_cache_seconds = default_cache_seconds
+
+    def create_key(self, original_key):
+        key = original_key
+        if self.key_prefix:
+            key = "%s:%s" % (self.key_prefix, key)
+        return key
 
     def Set(self, key):
         return SetNode(self, key)
@@ -62,107 +69,6 @@ class Rediset(object):
             return self._operation(DifferenceNode, *items, **kwargs)
 
 
-class RedisWrapper(object):
-
-    """
-    Simple wrapper around a Redis client instance
-
-    Supports only the set operations we need, and automatically
-    prefixes all keys with key_prefix if set.
-    """
-
-    def __init__(self, key_prefix=None, client=None):
-        self.redis = client or redis.Redis()
-        self.key_prefix = key_prefix
-
-    def create_key(self, original_key):
-        key = original_key
-        if self.key_prefix:
-            key = "%s:%s" % (self.key_prefix, key)
-        return key
-
-    def set(self, key, value):
-        key = self.create_key(key)
-        return self.redis.set(key, value)
-
-    def scard(self, key):
-        key = self.create_key(key)
-        return self.redis.scard(key)
-
-    def sadd(self, key, *values):
-        key = self.create_key(key)
-        return self.redis.sadd(key, *values)
-
-    def srem(self, key, *values):
-        key = self.create_key(key)
-        return self.redis.srem(key, *values)
-
-    def smembers(self, key):
-        key = self.create_key(key)
-        return self.redis.smembers(key)
-
-    def sinterstore(self, dest, keys):
-        dest = self.create_key(dest)
-        keys = [self.create_key(key) for key in keys]
-        return self.redis.sinterstore(dest, keys)
-
-    def sunionstore(self, dest, keys):
-        dest = self.create_key(dest)
-        keys = [self.create_key(key) for key in keys]
-        return self.redis.sunionstore(dest, keys)
-
-    def sdiffstore(self, dest, keys):
-        dest = self.create_key(dest)
-        keys = [self.create_key(key) for key in keys]
-        return self.redis.sdiffstore(dest, keys)
-
-    def sismember(self, key, item):
-        key = self.create_key(key)
-        return self.redis.sismember(key, item)
-
-    def zadd(self, key, *args, **kwargs):
-        key = self.create_key(key)
-        return self.redis.zadd(key, *args, **kwargs)
-
-    def zcard(self, key):
-        key = self.create_key(key)
-        return self.redis.zcard(key)
-
-    def zrem(self, key, *values):
-        key = self.create_key(key)
-        return self.redis.zrem(key, *values)
-
-    def zincrby(self, key, *args, **kwargs):
-        key = self.create_key(key)
-        return self.redis.zincrby(key, *args, **kwargs)
-
-    def zrange(self, key, *args, **kwargs):
-        key = self.create_key(key)
-        return self.redis.zrange(key, *args, **kwargs)
-
-    def zscore(self, key, item):
-        key = self.create_key(key)
-        return self.redis.zscore(key, item)
-
-    def zinterstore(self, dest, keys, aggregate=None):
-        dest = self.create_key(dest)
-        keys = [self.create_key(key) for key in keys]
-        return self.redis.zinterstore(dest, keys, aggregate=aggregate)
-
-    def zunionstore(self, dest, keys, aggregate=None):
-        dest = self.create_key(dest)
-        keys = [self.create_key(key) for key in keys]
-        return self.redis.zunionstore(dest, keys, aggregate=aggregate)
-
-    def exists(self, key):
-        key = self.create_key(key)
-        return self.redis.exists(key)
-
-    def expire(self, key, time):
-        key = self.create_key(key)
-        return self.redis.expire(key, time)
-
-
 class Node(object):
 
     """
@@ -179,39 +85,43 @@ class Node(object):
 
     def cardinality(self):
         self.create()
-        return self.rediset.redis.scard(self.key)
+        return self.rs.redis.scard(self.prefixed_key)
 
     def __len__(self):
         return self.cardinality()
 
     def members(self):
         self.create()
-        return self.rediset.redis.smembers(self.key)
+        return self.rs.redis.smembers(self.prefixed_key)
 
     def __iter__(self):
         return iter(self.members())
 
     def contains(self, item):
         self.create()
-        return self.rediset.redis.sismember(self.key, item)
+        return self.rs.redis.sismember(self.prefixed_key, item)
 
     def __contains__(self, item):
         return self.contains(item)
 
     def intersection(self, *others, **kwargs):
         sets = (self,) + others
-        return self.rediset.Intersection(*sets, **kwargs)
+        return self.rs.Intersection(*sets, **kwargs)
 
     def union(self, *others, **kwargs):
         sets = (self,) + others
-        return self.rediset.Union(*sets, **kwargs)
+        return self.rs.Union(*sets, **kwargs)
 
     def difference(self, *others, **kwargs):
         sets = (self,) + others
-        return self.rediset.Difference(*sets, **kwargs)
+        return self.rs.Difference(*sets, **kwargs)
 
     def create(self):
         pass
+
+    @property
+    def prefixed_key(self):
+        return self.rs.create_key(self.key)
 
 
 class SetNode(Node):
@@ -229,14 +139,14 @@ class SetNode(Node):
     """
 
     def __init__(self, rediset, key):
-        self.rediset = rediset
+        self.rs = rediset
         self.key = key
 
     def add(self, *values):
-        self.rediset.redis.sadd(self.key, *values)
+        self.rs.redis.sadd(self.prefixed_key, *values)
 
     def remove(self, *values):
-        self.rediset.redis.srem(self.key, *values)
+        self.rs.redis.srem(self.prefixed_key, *values)
 
 
 class SortedNode(Node):
@@ -247,7 +157,7 @@ class SortedNode(Node):
 
     def cardinality(self):
         self.create()
-        return self.rediset.redis.zcard(self.key)
+        return self.rs.redis.zcard(self.prefixed_key)
 
     def members(self, *args, **kwargs):
         return self.range(start=0, end=-1, *args, **kwargs)
@@ -263,7 +173,7 @@ class SortedNode(Node):
         Get a range of items from the sorted set. See redis-py docs for details
         """
         self.create()
-        return self.rediset.redis.zrange(self.key, *args, **kwargs)
+        return self.rs.redis.zrange(self.prefixed_key, *args, **kwargs)
 
     def get(self, index, *args, **kwargs):
         """
@@ -290,7 +200,7 @@ class SortedNode(Node):
         Get the score for the given sorted set member
         """
         self.create()
-        return self.rediset.redis.zscore(self.key, item)
+        return self.rs.redis.zscore(self.prefixed_key, item)
 
 
 class SortedSetNode(SortedNode):
@@ -300,18 +210,18 @@ class SortedSetNode(SortedNode):
     """
 
     def __init__(self, rediset, key):
-        self.rediset = rediset
+        self.rs = rediset
         self.key = key
 
     def add(self, *values):
         values = dict(values)
-        self.rediset.redis.zadd(self.key, **values)
+        self.rs.redis.zadd(self.prefixed_key, **values)
 
     def remove(self, *values):
-        self.rediset.redis.zrem(self.key, *values)
+        self.rs.redis.zrem(self.prefixed_key, *values)
 
     def increment(self, item, amount=1):
-        return self.rediset.redis.zincrby(self.key, item, amount)
+        return self.rs.redis.zincrby(self.prefixed_key, item, amount)
 
     def decrement(self, item, amount=1):
         return self.increment(item, amount=amount * -1)
@@ -329,7 +239,7 @@ class OperationNode(Node):
     """
 
     def __init__(self, rediset, children, cache_seconds=None):
-        self.rediset = rediset
+        self.rs = rediset
 
         children = children or []
         processed_children = []
@@ -346,10 +256,14 @@ class OperationNode(Node):
     def cache_key(self):
         return 'cached:%s' % self.key
 
+    @property
+    def prefixed_cache_key(self):
+        return self.rs.create_key(self.cache_key)
+
     def setup_cache(self):
-        self.rediset.redis.set(self.cache_key, 1)
-        self.rediset.redis.expire(self.cache_key, self.cache_seconds)
-        self.rediset.redis.expire(self.key, self.cache_seconds)
+        self.rs.redis.set(self.prefixed_cache_key, 1)
+        self.rs.redis.expire(self.prefixed_cache_key, self.cache_seconds)
+        self.rs.redis.expire(self.prefixed_key, self.cache_seconds)
 
     def create_children(self):
         for child in self.children:
@@ -358,8 +272,11 @@ class OperationNode(Node):
     def child_keys(self):
         return [child.key for child in self.children]
 
+    def prefixed_child_keys(self):
+        return [self.rs.create_key(key) for key in self.child_keys()]
+
     def create(self):
-        if not self.rediset.redis.exists(self.cache_key):
+        if not self.rs.redis.exists(self.prefixed_cache_key):
             self.create_children()
             self.perform_operation()
             self.setup_cache()
@@ -376,7 +293,7 @@ class IntersectionNode(OperationNode):
         return "intersection(%s)" % ",".join(sorted(self.child_keys()))
 
     def perform_operation(self):
-        return self.rediset.redis.sinterstore(self.key, self.child_keys())
+        return self.rs.redis.sinterstore(self.prefixed_key, self.prefixed_child_keys())
 
 
 class UnionNode(OperationNode):
@@ -390,7 +307,7 @@ class UnionNode(OperationNode):
         return "union(%s)" % ",".join(sorted(self.child_keys()))
 
     def perform_operation(self):
-        return self.rediset.redis.sunionstore(self.key, self.child_keys())
+        return self.rs.redis.sunionstore(self.prefixed_key, self.prefixed_child_keys())
 
 
 class DifferenceNode(OperationNode):
@@ -407,7 +324,7 @@ class DifferenceNode(OperationNode):
         return "difference(%s)" % ",".join(child_keys)
 
     def perform_operation(self):
-        return self.rediset.redis.sdiffstore(self.key, self.child_keys())
+        return self.rs.redis.sdiffstore(self.prefixed_key, self.prefixed_child_keys())
 
 
 class SortedOperationNode(OperationNode, SortedNode):
@@ -443,7 +360,7 @@ class SortedIntersectionNode(SortedOperationNode):
         )
 
     def perform_operation(self):
-        return self.rediset.redis.zinterstore(self.key, self.child_keys(),
+        return self.rs.redis.zinterstore(self.prefixed_key, self.prefixed_child_keys(),
                                               aggregate=self.aggregate)
 
 
@@ -461,7 +378,7 @@ class SortedUnionNode(SortedOperationNode):
         )
 
     def perform_operation(self):
-        return self.rediset.redis.zunionstore(self.key, self.child_keys(),
+        return self.rs.redis.zunionstore(self.prefixed_key, self.prefixed_child_keys(),
                                               aggregate=self.aggregate)
 
 
