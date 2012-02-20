@@ -226,6 +226,12 @@ class SortedSetNode(SortedNode):
     def decrement(self, item, amount=1):
         return self.increment(item, amount=amount * -1)
 
+    def remrangebyrank(self, min, max):
+        return self.rs.redis.zremrangebyrank(self.prefixed_key, min, max)
+
+    def remrangebyscore(self, min, max):
+        return self.rs.redis.zremrangebyscore(self.prefixed_key, min, max)
+
 
 class OperationNode(Node):
 
