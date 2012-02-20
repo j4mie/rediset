@@ -159,6 +159,26 @@ class SortedSetTestCase(RedisTestCase):
         result = s.increment('a')
         self.assertEqual(result, 3)
 
+    def test_remrangebyrank(self):
+        s = self.rediset.SortedSet('key')
+        s.add(('a', 1), ('b', 2), ('c', 3), ('d', 4), ('e', 5), ('f', 6), ('g', 7))
+
+        s.remrangebyrank(0, 1)
+        self.assertEqual(s.members(), ['c', 'd', 'e', 'f', 'g'])
+
+        s.remrangebyrank(0, -3)
+        self.assertEqual(s.members(), ['f', 'g'])
+
+    def test_remrangebyrank(self):
+        s = self.rediset.SortedSet('key')
+        s.add(('a', 1), ('b', 2), ('c', 3), ('d', 4), ('e', 5), ('f', 6), ('g', 7))
+
+        s.remrangebyscore(3, 5)
+        self.assertEqual(s.members(), ['a', 'b', 'f', 'g'])
+
+        s.remrangebyscore('(6', 'inf')
+        self.assertEqual(s.members(), ['a', 'b', 'f'])
+
 
 class SortedSetOperationTestCase(RedisTestCase):
 
