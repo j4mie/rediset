@@ -10,6 +10,11 @@ Full documentation is available at [http://j4mie.github.com/rediset](http://j4mi
 
 ## Changelog
 
+#### 0.5.0
+
+* Refactoring to remove internal Redis wrapper class
+* Add support for zremrangebyrank and zremrangebyscore to sorted sets
+
 #### 0.4.0
 
 * Rework documentation, now at http://j4mie.github.com/rediset
