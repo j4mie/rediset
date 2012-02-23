@@ -39,7 +39,7 @@ class RedisTestCase(TestCase):
     PREFIX = 'rediset-tests'
 
     def setUp(self):
-        self.rediset = Rediset(key_prefix=self.PREFIX, hash_generated_keys=True)
+        self.rediset = Rediset(key_prefix=self.PREFIX)
         self.rediset.redis = Mock(wraps=self.rediset.redis)
 
     def tearDown(self):
