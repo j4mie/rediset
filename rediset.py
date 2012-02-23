@@ -7,6 +7,9 @@ class Rediset(object):
     Main class responsible for creating instances of sets and operators
     """
 
+    # All volatile keys produced by Rediset will be prefixed with this key
+    GENERATED_KEY_PREFIX = 'rediset'
+
     def __init__(self, key_prefix=None, default_cache_seconds=60, redis_client=None):
         self.key_prefix = key_prefix
         self.redis = redis_client or redis.Redis()
@@ -259,8 +262,17 @@ class OperationNode(Node):
         self.cache_seconds = cache_seconds
 
     @property
+    def prefixed_key(self):
+        """
+        Operation keys (those generated automatically by Rediset) should
+        all have a common prefix, to distinguish them from user-specified
+        keys representing sets or sorted sets
+        """
+        return self.rs.create_key("%s:%s" % (self.rs.GENERATED_KEY_PREFIX, self.key))
+
+    @property
     def cache_key(self):
-        return 'cached:%s' % self.key
+        return '%s:cached:%s' % (self.rs.GENERATED_KEY_PREFIX, self.key)
 
     @property
     def prefixed_cache_key(self):
@@ -279,7 +291,13 @@ class OperationNode(Node):
         return [child.key for child in self.children]
 
     def prefixed_child_keys(self):
-        return [self.rs.create_key(key) for key in self.child_keys()]
+        results = []
+        for child in self.children:
+            key = child.key
+            if isinstance(child, OperationNode):
+                key = "%s:%s" % (self.rs.GENERATED_KEY_PREFIX, key)
+            results.append(self.rs.create_key(key))
+        return results
 
     def create(self):
         if not self.rs.redis.exists(self.prefixed_cache_key):
