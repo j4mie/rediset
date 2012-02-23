@@ -1,3 +1,4 @@
+import hashlib
 import redis
 
 
@@ -7,18 +8,36 @@ class Rediset(object):
     Main class responsible for creating instances of sets and operators
     """
 
-    # All volatile keys produced by Rediset will be prefixed with this key
+    # All volatile keys produced by Rediset will be prefixed with this string
     GENERATED_KEY_PREFIX = 'rediset'
 
-    def __init__(self, key_prefix=None, default_cache_seconds=60, redis_client=None):
+    # All cache keys will be prefixed with this string
+    CACHE_KEY_PREFIX = 'cached'
+
+    def __init__(self, key_prefix=None, default_cache_seconds=60, redis_client=None, hash_generated_keys=False):
         self.key_prefix = key_prefix
+        self.hash_generated_keys = hash_generated_keys
         self.redis = redis_client or redis.Redis()
         self.default_cache_seconds = default_cache_seconds
 
-    def create_key(self, original_key):
+    def hash_key(self, key):
+        return hashlib.md5(key).hexdigest()
+
+    def create_key(self, original_key, generated=False, is_cache_key=False):
         key = original_key
+
+        if generated and self.hash_generated_keys:
+            key = self.hash_key(key)
+
+        if is_cache_key:
+            key = "%s:%s" % (self.CACHE_KEY_PREFIX, key)
+
+        if generated:
+            key = "%s:%s" % (self.GENERATED_KEY_PREFIX, key)
+
         if self.key_prefix:
             key = "%s:%s" % (self.key_prefix, key)
+
         return key
 
     def Set(self, key):
@@ -268,15 +287,11 @@ class OperationNode(Node):
         all have a common prefix, to distinguish them from user-specified
         keys representing sets or sorted sets
         """
-        return self.rs.create_key("%s:%s" % (self.rs.GENERATED_KEY_PREFIX, self.key))
-
-    @property
-    def cache_key(self):
-        return '%s:cached:%s' % (self.rs.GENERATED_KEY_PREFIX, self.key)
+        return self.rs.create_key(self.key, generated=True)
 
     @property
     def prefixed_cache_key(self):
-        return self.rs.create_key(self.cache_key)
+        return self.rs.create_key(self.key, generated=True, is_cache_key=True)
 
     def setup_cache(self):
         self.rs.redis.set(self.prefixed_cache_key, 1)
@@ -295,8 +310,10 @@ class OperationNode(Node):
         for child in self.children:
             key = child.key
             if isinstance(child, OperationNode):
-                key = "%s:%s" % (self.rs.GENERATED_KEY_PREFIX, key)
-            results.append(self.rs.create_key(key))
+                key = self.rs.create_key(key, generated=True)
+            else:
+                key = self.rs.create_key(key)
+            results.append(key)
         return results
 
     def create(self):

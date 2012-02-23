@@ -17,13 +17,29 @@ class KeyGenerationTestCase(TestCase):
         key = rs.create_key('foo')
         self.assertEqual(key, 'some-prefix:foo')
 
+    def test_key_hashing(self):
+
+        # hashing disabled
+        rs = Rediset(hash_generated_keys=False)
+        key = rs.create_key('foo')
+        self.assertEqual(key, 'foo')
+        key = rs.create_key('foo', generated=True)
+        self.assertEqual(key, 'rediset:foo')
+
+        # hashing enabled
+        rs = Rediset(hash_generated_keys=True)
+        key = rs.create_key('foo')
+        self.assertEqual(key, 'foo')
+        key = rs.create_key('foo', generated=True)
+        self.assertEqual(key, 'rediset:acbd18db4cc2f85cedef654fccc4a4d8')
+
 
 class RedisTestCase(TestCase):
 
     PREFIX = 'rediset-tests'
 
     def setUp(self):
-        self.rediset = Rediset(key_prefix=self.PREFIX)
+        self.rediset = Rediset(key_prefix=self.PREFIX, hash_generated_keys=True)
         self.rediset.redis = Mock(wraps=self.rediset.redis)
 
     def tearDown(self):
@@ -32,6 +48,23 @@ class RedisTestCase(TestCase):
         if keys:
             redis.delete(*keys)
 
+
+class HashingTestCase(RedisTestCase):
+
+    def setUp(self):
+        super(HashingTestCase, self).setUp()
+        self.rediset.hash_generated_keys = True
+
+    def test_sets_are_not_hashed(self):
+        s = self.rediset.Set('key')
+        self.assertEqual(s.key, 'key')
+        self.assertEqual(s.prefixed_key, 'rediset-tests:key')
+
+    def test_operations_are_hashed(self):
+        i = self.rediset.Intersection('key1', 'key2')
+        self.assertEqual(i.key, 'intersection(key1,key2)')
+        self.assertEqual(i.prefixed_key, 'rediset-tests:rediset:e98e8da811c3c5597e0d48f47010bf91')
+        self.assertEqual(i.prefixed_cache_key, 'rediset-tests:rediset:cached:e98e8da811c3c5597e0d48f47010bf91')
 
 class SetTestCase(RedisTestCase):
 
