@@ -294,9 +294,10 @@ class OperationNode(Node):
         return self.rs.create_key(self.key, generated=True, is_cache_key=True)
 
     def setup_cache(self):
-        self.rs.redis.set(self.prefixed_cache_key, 1)
-        self.rs.redis.expire(self.prefixed_cache_key, self.cache_seconds)
-        self.rs.redis.expire(self.prefixed_key, self.cache_seconds)
+        pipe = self.rs.redis.pipeline()
+        pipe.setex(self.prefixed_cache_key, self.cache_seconds, 1)
+        pipe.expire(self.prefixed_key, self.cache_seconds)
+        pipe.execute()
 
     def create_children(self):
         for child in self.children:
