@@ -215,6 +215,16 @@ class SortedNode(Node):
                     raise IndexError('list index out of range')
                 return results
 
+        @property
+        def withscores(self):
+            self.overrides['withscores'] = True
+            return self
+
+        @property
+        def reversed(self):
+            self.overrides['desc'] = True
+            return self
+
     def range_view(self, **overrides):
         return SortedNode.RangeView(self, **overrides)
 
@@ -249,11 +259,11 @@ class SortedNode(Node):
 
     @property
     def withscores(self):
-        return self.range_view(withscores=True)
+        return self.range_view().withscores
 
     @property
     def reversed(self):
-        return self.range_view(desc=True)
+        return self.range_view().reversed
 
 
 class SortedSetNode(SortedNode):
