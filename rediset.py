@@ -179,6 +179,13 @@ class SortedNode(Node):
 
     class RangeView(object):
 
+        """
+        Instances of this class are used to access ranges of a sorted
+        set. This is so we can easily support Pythonic slicing, while
+        passing arguments to the underlying zrange calls. This approach
+        was borrowed from github.com/ask/redish/
+        """
+
         def __init__(self, proxied, **overrides):
             self.proxied = proxied
             self.overrides = overrides or {}
