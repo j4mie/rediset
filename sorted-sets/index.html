@@ -62,6 +62,20 @@ functions in redis-py, so please look at its documentation for more information.
 </pre></div>
 
 
+<p>Sorted sets also support <em>range views</em>, which are used to pass arguments to the
+underlying zrange calls while still allowing Pythonic slicing syntax. The two
+provided range views are <code>withscores</code> and <code>reversed</code>:</p>
+<div class="codehilite"><pre><span class="o">&gt;&gt;&gt;</span> <span class="sr">s[0]</span>
+<span class="err">'a'</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">s</span><span class="o">.</span><span class="n">reversed</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="s">'c'</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">s</span><span class="o">.</span><span class="n">withscores</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="p">(</span><span class="s">'a'</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">s</span><span class="o">.</span><span class="n">reversed</span><span class="o">.</span><span class="n">withscores</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="p">(</span><span class="s">'c'</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">)</span>
+</pre></div>
+
+
 <h2 id="sorted-set-operations">Sorted set operations</h2>
 <p>You can perform operations on sorted sets, just as you can with ordinary sets.
 Note that only <code>Intersection</code> and <code>Union</code> are supported, not <code>Difference</code> (this
