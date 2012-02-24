@@ -136,10 +136,10 @@ class SortedSetTestCase(RedisTestCase):
 
         self.assertEqual(s.range(0, 2, withscores=True), [('a', 1), ('b', 2), ('c', 3)])
 
-        self.assertEqual(s[0:1], ['a', 'b'])
+        self.assertEqual(s[0:1], ['a'])
 
         self.assertEqual(s[1:], ['b', 'c'])
-        self.assertEqual(s[:1], ['a', 'b'])
+        self.assertEqual(s[:1], ['a'])
         self.assertEqual(s[0:10], ['a', 'b', 'c'])
 
     def test_big_slice(self):
@@ -148,41 +148,60 @@ class SortedSetTestCase(RedisTestCase):
             s.add((str(counter), counter))
 
         middle = s[25:74]
-        self.assertEqual(len(middle), 50)
+        self.assertEqual(len(middle), 49)
 
         for item in middle:
             pass
 
         self.assertEqual(self.rediset.redis.zrange.call_count, 1)
 
+    def test_slicing_regression(self):
+        s = self.rediset.SortedSet('key')
+        [s.add(('item%s' % i, i)) for i in range(10)]
+
+        self.assertEqual(len(s[0:5]), 5)
+        self.assertEqual(len(s[0:0]), 0)
+        self.assertEqual(len(s[100:0]), 0)
+        self.assertEqual(len(s[5:3]), 0)
+        self.assertEqual(len(s[:]), 10)
+        self.assertEqual(len(s[0:-1]), 9)
+        self.assertEqual(len(s[:5]), 5)
+        self.assertEqual(len(s.descending[0:5]), 5)
+        self.assertEqual(len(s.descending[0:0]), 0)
+        self.assertEqual(len(s.descending[100:0]), 0)
+        self.assertEqual(len(s.descending[5:3]), 0)
+        self.assertEqual(len(s.descending[:]), 10)
+        self.assertEqual(len(s.descending[0:-1]), 9)
+        self.assertEqual(len(s.descending[:5]), 5)
+
     def test_withscores_property(self):
         s = self.rediset.SortedSet('key')
         s.add(('a', 1), ('b', 2), ('c', 3))
 
-        self.assertEqual(s[0:-1], ['a', 'b', 'c'])
+        self.assertEqual(s[0:-1], ['a', 'b'])
 
-        self.assertEqual(s.withscores[0:-1], [('a', 1), ('b', 2), ('c', 3)])
+        self.assertEqual(s.withscores[0:-1], [('a', 1), ('b', 2)])
         self.assertEqual(s.withscores[0], ('a', 1))
 
     def test_descending_property(self):
         s = self.rediset.SortedSet('key')
         s.add(('a', 1), ('b', 2), ('c', 3))
 
-        self.assertEqual(s[0:-1], ['a', 'b', 'c'])
+        self.assertEqual(s[0:-1], ['a', 'b'])
 
-        self.assertEqual(s.descending[0:-1], ['c', 'b', 'a'])
+        self.assertEqual(s.descending[0:-1], ['c', 'b'])
         self.assertEqual(s.descending[0], 'c')
 
     def test_descending_withscores(self):
         s = self.rediset.SortedSet('key')
         s.add(('a', 1), ('b', 2), ('c', 3))
 
-        self.assertEqual(s[0:-1], ['a', 'b', 'c'])
+        self.assertEqual(s[0:-1], ['a', 'b'])
 
-        self.assertEqual(s.descending.withscores[0:-1], [('c', 3), ('b', 2), ('a', 1)])
+        self.assertEqual(s.descending.withscores[0:-1], [('c', 3), ('b', 2)])
         self.assertEqual(s.descending.withscores[0], ('c', 3))
 
-        self.assertEqual(s.withscores.descending[0:-1], [('c', 3), ('b', 2), ('a', 1)])
+        self.assertEqual(s.withscores.descending[0:-1], [('c', 3), ('b', 2)])
         self.assertEqual(s.withscores.descending[0], ('c', 3))
 
     def test_range_views_pass_through_method_calls(self):

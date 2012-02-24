@@ -10,6 +10,10 @@ Full documentation is available at [http://j4mie.github.com/rediset](http://j4mi
 
 ## Changelog
 
+#### 0.11.0
+
+* Fix broken SortedSet slicing behaviour and broken tests.
+
 #### 0.10.0
 
 * Range views now support more operations, eg len(), proxied through to their parent SortedSet
