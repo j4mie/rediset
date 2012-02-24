@@ -66,6 +66,7 @@ class HashingTestCase(RedisTestCase):
         self.assertEqual(i.prefixed_key, 'rediset-tests:rediset:e98e8da811c3c5597e0d48f47010bf91')
         self.assertEqual(i.prefixed_cache_key, 'rediset-tests:rediset:cached:e98e8da811c3c5597e0d48f47010bf91')
 
+
 class SetTestCase(RedisTestCase):
 
     def test_basic_set(self):
