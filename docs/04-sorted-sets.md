@@ -56,6 +56,19 @@ functions in redis-py, so please look at its documentation for more information.
     >>> s.decrement('c', amount=2)
     2.0
 
+Sorted sets also support *range views*, which are used to pass arguments to the
+underlying zrange calls while still allowing Pythonic slicing syntax. The two
+provided range views are `withscores` and `reversed`:
+
+    >>> s[0]
+    'a'
+    >>> s.reversed[0]
+    'c'
+    >>> s.withscores[0]
+    ('a', 1.0)
+    >>> s.reversed.withscores[0]
+    ('c', 3.0)
+
 ## Sorted set operations
 
 You can perform operations on sorted sets, just as you can with ordinary sets.
