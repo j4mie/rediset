@@ -185,6 +185,17 @@ class SortedSetTestCase(RedisTestCase):
         self.assertEqual(s.withscores.descending[0:-1], [('c', 3), ('b', 2), ('a', 1)])
         self.assertEqual(s.withscores.descending[0], ('c', 3))
 
+    def test_range_views_pass_through_method_calls(self):
+        s = self.rediset.SortedSet('key')
+        s.add(('a', 1), ('b', 2), ('c', 3))
+
+        self.assertEqual(s.descending.cardinality(), 3)
+        self.assertEqual(len(s.descending), 3)
+        self.assertTrue('a' in s.descending)
+        self.assertFalse('z' in s.descending)
+
+        self.assertEqual([item for item in s.descending], ['c','b', 'a'])
+
     def test_iteration(self):
         s = self.rediset.SortedSet('key')
         s.add(('a', 1), ('b', 2), ('c', 3))
