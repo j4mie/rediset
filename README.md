@@ -10,6 +10,10 @@ Full documentation is available at [http://j4mie.github.com/rediset](http://j4mi
 
 ## Changelog
 
+#### 0.10.0
+
+* Range views now support more operations, eg len(), proxied through to their parent SortedSet
+
 #### 0.9.0
 
 * Rename "reversed" range view to "descending"
