@@ -214,7 +214,12 @@ class SortedNode(Node):
 
             if isinstance(arg, slice):
                 start = arg.start or 0
-                end = arg.stop or -1
+                if arg.stop == 0:
+                    return []
+                if arg.stop is None:
+                    end = -1
+                else:
+                    end = arg.stop - 1
                 return self.range(start, end)
             else:
                 results = self.get(arg)
