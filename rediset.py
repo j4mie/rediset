@@ -295,7 +295,7 @@ class OperationNode(Node):
 
     def setup_cache(self):
         pipe = self.rs.redis.pipeline()
-        pipe.setex(self.prefixed_cache_key, self.cache_seconds, 1)
+        pipe.setex(self.prefixed_cache_key, 1, self.cache_seconds)
         pipe.expire(self.prefixed_key, self.cache_seconds)
         pipe.execute()
 
