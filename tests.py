@@ -114,14 +114,14 @@ class SortedSetTestCase(RedisTestCase):
 
     def test_get_item(self):
         s = self.rediset.SortedSet('key')
-        s.add(('a', 1), ('b', 2), ('c', 3))
+        s.add(('abc', 1), ('b', 2), ('c', 3))
 
-        self.assertEqual(s.get(0), 'a')
+        self.assertEqual(s.get(0), 'abc')
         self.assertEqual(s.get(2), 'c')
         self.assertTrue(s.get(3) is None)
-        self.assertEqual(s.get(0, withscores=True), ('a', 1.0))
+        self.assertEqual(s.get(0, withscores=True), ('abc', 1.0))
 
-        self.assertEqual(s[0], 'a')
+        self.assertEqual(s[0], 'abc')
         self.assertEqual(s[2], 'c')
         with self.assertRaises(IndexError):
             s[3]
@@ -154,6 +154,15 @@ class SortedSetTestCase(RedisTestCase):
             pass
 
         self.assertEqual(self.rediset.redis.zrange.call_count, 1)
+
+    def test_withscores_property(self):
+        s = self.rediset.SortedSet('key')
+        s.add(('a', 1), ('b', 2), ('c', 3))
+
+        self.assertEqual(s[0:-1], ['a', 'b', 'c'])
+
+        self.assertEqual(s.withscores[0:-1], [('a', 1), ('b', 2), ('c', 3)])
+        self.assertEqual(s.withscores[0], ('a', 1))
 
     def test_iteration(self):
         s = self.rediset.SortedSet('key')
