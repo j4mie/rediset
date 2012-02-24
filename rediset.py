@@ -228,7 +228,7 @@ class SortedNode(Node):
             return self
 
         @property
-        def reversed(self):
+        def descending(self):
             self.overrides['desc'] = True
             return self
 
@@ -269,8 +269,8 @@ class SortedNode(Node):
         return self.range_view().withscores
 
     @property
-    def reversed(self):
-        return self.range_view().reversed
+    def descending(self):
+        return self.range_view().descending
 
 
 class SortedSetNode(SortedNode):

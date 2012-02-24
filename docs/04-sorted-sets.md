@@ -58,15 +58,15 @@ functions in redis-py, so please look at its documentation for more information.
 
 Sorted sets also support *range views*, which are used to pass arguments to the
 underlying zrange calls while still allowing Pythonic slicing syntax. The two
-provided range views are `withscores` and `reversed`:
+provided range views are `withscores` and `descending`:
 
     >>> s[0]
     'a'
-    >>> s.reversed[0]
+    >>> s.descending[0]
     'c'
     >>> s.withscores[0]
     ('a', 1.0)
-    >>> s.reversed.withscores[0]
+    >>> s.descending.withscores[0]
     ('c', 3.0)
 
 ## Sorted set operations
