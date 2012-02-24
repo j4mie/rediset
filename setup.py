@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name='rediset',
-    version='0.9.0',
+    version='0.10.0',
     description='Composable, cacheable, lazy trees of Redis set operations',
     author='Jamie Matthews',
     author_email='jamie.matthews@gmail.com',
