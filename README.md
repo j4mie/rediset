@@ -10,6 +10,10 @@ Full documentation is available at [http://j4mie.github.com/rediset](http://j4mi
 
 ## Changelog
 
+#### 0.12.0
+
+* Split huge rediset.py file into a package
+
 #### 0.11.0
 
 * Fix broken SortedSet slicing behaviour and broken tests.

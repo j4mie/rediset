@@ -1,13 +1,9 @@
 from unittest import TestCase
 from mock import Mock
 from time import sleep
-from rediset import (
-    Rediset,
-    SetNode,
-    IntersectionNode,
-    SortedIntersectionNode,
-    SortedUnionNode,
-)
+from rediset import Rediset
+from rediset.sets import SetNode, IntersectionNode
+from rediset.sortedsets import SortedIntersectionNode, SortedUnionNode
 
 
 class KeyGenerationTestCase(TestCase):
