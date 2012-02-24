@@ -222,6 +222,21 @@ class SortedNode(Node):
                     raise IndexError('list index out of range')
                 return results
 
+        def members(self, *args, **kwargs):
+            return self.range(start=0, end=-1, *args, **kwargs)
+
+        def __getattr__(self, attr):
+            return getattr(self.proxied, attr)
+
+        def __len__(self):
+            return len(self.proxied)
+
+        def __contains__(self, item):
+            return item in self.proxied
+
+        def __iter__(self):
+            return iter(self.members())
+
         @property
         def withscores(self):
             self.overrides['withscores'] = True
@@ -240,7 +255,7 @@ class SortedNode(Node):
         return self.rs.redis.zcard(self.prefixed_key)
 
     def members(self, *args, **kwargs):
-        return self.range(start=0, end=-1, *args, **kwargs)
+        return self.range_view().members(*args, **kwargs)
 
     def contains(self, item):
         """
