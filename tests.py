@@ -164,6 +164,15 @@ class SortedSetTestCase(RedisTestCase):
         self.assertEqual(s.withscores[0:-1], [('a', 1), ('b', 2), ('c', 3)])
         self.assertEqual(s.withscores[0], ('a', 1))
 
+    def test_reversed_property(self):
+        s = self.rediset.SortedSet('key')
+        s.add(('a', 1), ('b', 2), ('c', 3))
+
+        self.assertEqual(s[0:-1], ['a', 'b', 'c'])
+
+        self.assertEqual(s.reversed[0:-1], ['c', 'b', 'a'])
+        self.assertEqual(s.reversed[0], 'c')
+
     def test_iteration(self):
         s = self.rediset.SortedSet('key')
         s.add(('a', 1), ('b', 2), ('c', 3))
