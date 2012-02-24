@@ -177,6 +177,47 @@ class SortedNode(Node):
     Represents a node in a tree of sorted sets and sorted set operations
     """
 
+    class RangeView(object):
+
+        def __init__(self, proxied, **overrides):
+            self.proxied = proxied
+            self.overrides = overrides or {}
+
+        def range(self, *args, **kwargs):
+            """
+            Get a range of items from the sorted set. See redis-py docs for details
+            """
+            self.proxied.create()
+
+            for key, value in self.overrides.items():
+                kwargs.setdefault(key, value)
+
+            return self.proxied.rs.redis.zrange(self.proxied.prefixed_key, *args, **kwargs)
+
+        def get(self, index, *args, **kwargs):
+            """
+            Get a single item from the set by index. Equivalent to s[3] but
+            returns None if the index is out of range.
+            """
+            result = self.range(start=index, end=index, *args, **kwargs)
+            if result:
+                return result[0]
+
+        def __getitem__(self, arg):
+
+            if isinstance(arg, slice):
+                start = arg.start or 0
+                end = arg.stop or -1
+                return self.range(start, end)
+            else:
+                results = self.get(arg)
+                if results is None:
+                    raise IndexError('list index out of range')
+                return results
+
+    def range_view(self, **overrides):
+        return SortedNode.RangeView(self, **overrides)
+
     def cardinality(self):
         self.create()
         return self.rs.redis.zcard(self.prefixed_key)
@@ -191,31 +232,13 @@ class SortedNode(Node):
         return self.score(item) is not None
 
     def range(self, *args, **kwargs):
-        """
-        Get a range of items from the sorted set. See redis-py docs for details
-        """
-        self.create()
-        return self.rs.redis.zrange(self.prefixed_key, *args, **kwargs)
+        return self.range_view().range(*args, **kwargs)
 
     def get(self, index, *args, **kwargs):
-        """
-        Get a single item from the set by index. Equivalent to s[3] but
-        returns None if the index is out of range.
-        """
-        result = self.range(start=index, end=index, *args, **kwargs)
-        if result:
-            return result[0]
+        return self.range_view().get(index, *args, **kwargs)
 
     def __getitem__(self, arg):
-        if isinstance(arg, slice):
-            start = arg.start or 0
-            end = arg.stop or -1
-            return self.range(start, end)
-        else:
-            results = self.get(arg)
-            if results is None:
-                raise IndexError('list index out of range')
-            return results[0]
+        return self.range_view().__getitem__(arg)
 
     def score(self, item):
         """
@@ -223,6 +246,10 @@ class SortedNode(Node):
         """
         self.create()
         return self.rs.redis.zscore(self.prefixed_key, item)
+
+    @property
+    def withscores(self):
+        return self.range_view(withscores=True)
 
 
 class SortedSetNode(SortedNode):
