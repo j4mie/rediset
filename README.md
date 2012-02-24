@@ -10,6 +10,10 @@ Full documentation is available at [http://j4mie.github.com/rediset](http://j4mi
 
 ## Changelog
 
+#### 0.9.0
+
+* Rename "reversed" range view to "descending"
+
 #### 0.8.0
 
 * Add support for range views on sorted sets; ss.reversed and ss.withscores
