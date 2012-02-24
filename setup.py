@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name='rediset',
@@ -11,7 +11,7 @@ setup(
     author_email='jamie.matthews@gmail.com',
     url='https://github.com/j4mie/rediset',
     license = 'Public Domain',
-    py_modules=['rediset'],
+    packages=find_packages(),
     install_requires=['redis'],
     classifiers = [
         'Programming Language :: Python',
