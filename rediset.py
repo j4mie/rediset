@@ -251,6 +251,10 @@ class SortedNode(Node):
     def withscores(self):
         return self.range_view(withscores=True)
 
+    @property
+    def reversed(self):
+        return self.range_view(desc=True)
+
 
 class SortedSetNode(SortedNode):
 
