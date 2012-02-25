@@ -162,6 +162,7 @@ class SortedOperationNode(OperationNode, SortedNode):
 
     def __init__(self, *args, **kwargs):
         self.aggregate = kwargs.pop('aggregate', 'SUM')
+        self.weights = kwargs.pop('weights',None)
         super(SortedOperationNode, self).__init__(*args, **kwargs)
 
     def extra_key_components(self):
@@ -170,6 +171,12 @@ class SortedOperationNode(OperationNode, SortedNode):
         to this operation, such as aggregate
         """
         return "aggregate=%s" % self.aggregate
+    
+    def weighted_child_keys(self):
+        if self.weights:
+            return dict(zip(self.prefixed_child_keys(), self.weights))
+        else:
+            return self.prefixed_child_keys()
 
 
 class SortedIntersectionNode(SortedOperationNode):
@@ -181,12 +188,12 @@ class SortedIntersectionNode(SortedOperationNode):
     @property
     def key(self):
         return "sortedintersection(%s)(%s)" % (
-            ",".join(sorted(self.child_keys())),
+            ",".join(sorted(self.weighted_child_keys())),
             self.extra_key_components(),
         )
 
     def perform_operation(self):
-        return self.rs.redis.zinterstore(self.prefixed_key, self.prefixed_child_keys(),
+        return self.rs.redis.zinterstore(self.prefixed_key, self.weighted_child_keys(),
                                               aggregate=self.aggregate)
 
 
@@ -199,12 +206,12 @@ class SortedUnionNode(SortedOperationNode):
     @property
     def key(self):
         return "sortedunion(%s)(%s)" % (
-            ",".join(sorted(self.child_keys())),
+            ",".join(sorted(self.weighted_child_keys())),
             self.extra_key_components(),
         )
 
     def perform_operation(self):
-        return self.rs.redis.zunionstore(self.prefixed_key, self.prefixed_child_keys(),
+        return self.rs.redis.zunionstore(self.prefixed_key, self.weighted_child_keys(),
                                               aggregate=self.aggregate)
 
 
