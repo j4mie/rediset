@@ -99,3 +99,8 @@ Note that you can't mix sets with sorted sets:
     >>> s2.add('c')
     >>> i = rs.Intersection(s1, s2)
     TypeError: Sets and SortedSets cannot be mixed
+
+You can perform weighted set operations by passing in (set, weight) tuples into the operation constructors:
+
+
+    >>> i4 = rs.Intersection((s1,0.5), (s2,2))
