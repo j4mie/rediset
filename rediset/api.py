@@ -54,6 +54,9 @@ class Rediset(object):
     def _operation(self, setcls, sortedsetcls, *items, **kwargs):
         self._check_types(items)
         cls =  sortedsetcls if self._is_sorted(items[0]) else setcls
+        if self._is_weighted(items[0]):
+            kwargs["weights"] = [item[1] for item in items]
+            items = [item[0] for item in items]
         if len(items) == 1:
             item = items[0]
             if isinstance(item, basestring):
@@ -64,17 +67,31 @@ class Rediset(object):
         return cls(self, items, **kwargs)
 
     def _is_sorted(self, item):
-        return isinstance(item, sortedsets.SortedNode)
+        """
+        A SortedNode might be specified on it's own or as part of a
+        2-tuple with a weight.
+        """
+        return isinstance(item, sortedsets.SortedNode) or self._is_weighted(item)
 
+    def _is_weighted(self, item):
+        """
+        A weighted SortedNode specified as a 2-tuple of (node,weight)
+        """
+        return isinstance(item, tuple) and \
+               len(item) == 2 and \
+               isinstance(item[0], sortedsets.SortedNode) and \
+               isinstance(item[1], (int,long,float)) 
+    
     def _check_types(self, items):
         """
         Check all items are sorted, or all items are unsorted (not mixed)
         """
-        first_is_sorted = self._is_sorted(items[0])
-        for item in items:
-            item_is_sorted = self._is_sorted(item)
-            if first_is_sorted != item_is_sorted:
-                raise TypeError('Sets and SortedSets cannot be mixed')
+        def itemtype(item):
+            return (self._is_sorted(item),self._is_weighted(item))
+        first = itemtype(items[0])
+        for item in items[1:]:
+            if first != itemtype(item):
+                raise TypeError('All sets must be of the same type')
 
     def Intersection(self, *items, **kwargs):
         return self._operation(sets.IntersectionNode, sortedsets.SortedIntersectionNode, *items, **kwargs)
