@@ -37,6 +37,12 @@ You can install Rediset from PyPI:
 
 Rediset is an abstraction of Redis sets and set operations.
 
+## Requirements
+
+ - Python 2.7.X
+ - Redis 2.4.X or later
+ - Python modules as specified in requirements.txt
+
 ## Development
 
 To contribute: fork the repository, make your changes, add some tests, commit,
@@ -45,8 +51,8 @@ push to a feature branch, and open a pull request.
 ### How to run the tests
 
 Rediset is tested with [nose](http://nose.readthedocs.org). Clone the repository,
-create a virtualenv, then run `pip install -r requirements.txt`. Then, simply type
-`nosetests` to find and run all the tests.
+create a virtualenv (with Python 2.7), then run `pip install -r requirements.txt`. Then, simply type
+`nosetests` to find and run all the tests. A Redis Server version 2.4.0 or later must be running for the tests.
 
 ## (Un)license
 
