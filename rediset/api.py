@@ -51,7 +51,9 @@ class Rediset(object):
     def SortedSet(self, key):
         return sortedsets.SortedSetNode(self, key)
 
-    def _operation(self, cls, *items, **kwargs):
+    def _operation(self, setcls, sortedsetcls, *items, **kwargs):
+        self._check_types(items)
+        cls =  sortedsetcls if self._is_sorted(items[0]) else setcls
         if len(items) == 1:
             item = items[0]
             if isinstance(item, basestring):
@@ -75,28 +77,10 @@ class Rediset(object):
                 raise TypeError('Sets and SortedSets cannot be mixed')
 
     def Intersection(self, *items, **kwargs):
-        self._check_types(items)
-        if self._is_sorted(items[0]):
-            return self._operation(sortedsets.SortedIntersectionNode,
-                                   *items, **kwargs)
-        else:
-            return self._operation(sets.IntersectionNode,
-                                   *items, **kwargs)
+        return self._operation(sets.IntersectionNode, sortedsets.SortedIntersectionNode, *items, **kwargs)
 
     def Union(self, *items, **kwargs):
-        self._check_types(items)
-        if self._is_sorted(items[0]):
-            return self._operation(sortedsets.SortedUnionNode,
-                                   *items, **kwargs)
-        else:
-            return self._operation(sets.UnionNode,
-                                   *items, **kwargs)
+        return self._operation(sets.UnionNode, sortedsets.SortedUnionNode, *items, **kwargs)
 
     def Difference(self, *items, **kwargs):
-        self._check_types(items)
-        if self._is_sorted(items[0]):
-            return self._operation(sortedsets.SortedDifferenceNode,
-                                   *items, **kwargs)
-        else:
-            return self._operation(sets.DifferenceNode,
-                                   *items, **kwargs)
+        return self._operation(sets.DifferenceNode, sortedsets.SortedDifferenceNode, *items, **kwargs)
