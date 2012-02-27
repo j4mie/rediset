@@ -8,6 +8,10 @@
 
 Full documentation is available at [http://j4mie.github.com/rediset](http://j4mie.github.com/rediset).
 
+## Build status
+
+[![Build Status](https://secure.travis-ci.org/j4mie/rediset.png)](http://travis-ci.org/j4mie/rediset)
+
 ## Changelog
 
 #### 0.12.0
