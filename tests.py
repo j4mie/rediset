@@ -119,8 +119,11 @@ class SortedSetTestCase(RedisTestCase):
 
         self.assertEqual(s[0], 'abc')
         self.assertEqual(s[2], 'c')
-        with self.assertRaises(IndexError):
+
+        def should_raise_index_error():
             s[3]
+
+        self.assertRaises(IndexError, should_raise_index_error)
 
     def test_get_range(self):
         s = self.rediset.SortedSet('key')
@@ -289,9 +292,7 @@ class SortedSetOperationTestCase(RedisTestCase):
     def test_sorted_set_difference(self):
         s1 = self.rediset.SortedSet('key1')
         s2 = self.rediset.SortedSet('key2')
-
-        with self.assertRaises(TypeError):
-            d = self.rediset.Difference(s1, s2)
+        self.assertRaises(TypeError, self.rediset.Difference, s1, s2)
 
     def test_mixing_types(self):
         s1 = self.rediset.Set('key1')
@@ -299,14 +300,9 @@ class SortedSetOperationTestCase(RedisTestCase):
         s2 = self.rediset.SortedSet('key2')
         s2.add(('a', 1))
 
-        with self.assertRaises(TypeError):
-            i = self.rediset.Intersection(s1, s2)
-
-        with self.assertRaises(TypeError):
-            u = self.rediset.Union(s1, s2)
-
-        with self.assertRaises(TypeError):
-            d = self.rediset.Difference(s1, s2)
+        self.assertRaises(TypeError, self.rediset.Intersection, s1, s2)
+        self.assertRaises(TypeError, self.rediset.Union, s1, s2)
+        self.assertRaises(TypeError, self.rediset.Difference, s1, s2)
 
 
 class IntersectionTestCase(RedisTestCase):
