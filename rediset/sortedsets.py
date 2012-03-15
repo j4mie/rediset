@@ -113,6 +113,13 @@ class SortedNode(Node):
         """
         self.create()
         return self.rs.redis.zscore(self.prefixed_key, item)
+    
+    def rank(self, item):
+        """
+        Get the score for the given sorted set member
+        """
+        self.create()
+        return self.rs.redis.zrank(self.prefixed_key, item)
 
     @property
     def withscores(self):
