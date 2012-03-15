@@ -61,7 +61,8 @@ class Rediset(object):
             item = items[0]
             if isinstance(item, basestring):
                 return self.Set(item)
-            else:
+            # Weighted sets can't be short circuited
+            elif not isinstance(item, tuple):
                 return item
         kwargs.setdefault('cache_seconds', self.default_cache_seconds)
         return cls(self, items, **kwargs)
