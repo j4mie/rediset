@@ -170,7 +170,7 @@ class SortedOperationNode(OperationNode, SortedNode):
         Return a key component based on the variable options passed
         to this operation, such as aggregate
         """
-        return "aggregate=%s" % self.aggregate
+        return "aggregate=%s&weights=%s" % (self.aggregate, self.weights)
     
     def weighted_child_keys(self):
         if self.weights:
