@@ -17,6 +17,7 @@ Full documentation is available at [http://j4mie.github.com/rediset](http://j4mi
 #### 0.12.0
 
 * Split huge rediset.py file into a package
+* Add support for weighted sorted sets. Thanks to Thomas Parslow for the contribution.
 
 #### 0.11.0
 
