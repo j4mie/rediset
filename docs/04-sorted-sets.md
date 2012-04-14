@@ -102,5 +102,4 @@ Note that you can't mix sets with sorted sets:
 
 You can perform weighted set operations by passing in (set, weight) tuples into the operation constructors:
 
-
-    >>> i4 = rs.Intersection((s1,0.5), (s2,2))
+    >>> i4 = rs.Intersection((s1, 0.5), (s2, 2))
