@@ -69,19 +69,19 @@ class Rediset(object):
 
     def _is_sorted(self, item):
         """
-        A SortedNode might be specified on it's own or as part of a
+        A SortedNode might be specified on its own or as part of a
         2-tuple with a weight.
         """
         return isinstance(item, sortedsets.SortedNode) or self._is_weighted(item)
 
     def _is_weighted(self, item):
         """
-        A weighted SortedNode specified as a 2-tuple of (node,weight)
+        A weighted SortedNode specified as a 2-tuple of (node, weight)
         """
-        return isinstance(item, tuple) and \
-               len(item) == 2 and \
-               isinstance(item[0], sortedsets.SortedNode) and \
-               isinstance(item[1], (int,long,float)) 
+        return (isinstance(item, tuple) and
+               len(item) == 2 and
+               isinstance(item[0], sortedsets.SortedNode) and
+               isinstance(item[1], (int, long, float)))
     
     def _check_types(self, items):
         """
